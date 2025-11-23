@@ -100,11 +100,17 @@
     margin-top: 10px;
     margin-right: 5px;
   }
+  button#reduceRowButton {
+    background-color: #dc3545; /* Red color for removal */
+  }
   button#downloadButton {
     background-color: #28a745; 
   }
   button:hover {
     background-color: #0056b3;
+  }
+  button#reduceRowButton:hover {
+    background-color: #c82333;
   }
 </style>
 </head>
@@ -135,32 +141,32 @@
           <td>Previous Balance -</td>
           <td><input type="number" name="incomeAmount" value="00" oninput="calculateTotals()"></td>
           <td>1.</td>
-          <td><input type="text" name="expenseDesc" value="account name"></td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
           <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
         </tr>
 
         <tr>
-          <td></td>
+          <td>3.</td>
           <td><input type="text" name="incomeDesc"></td>
           <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
           <td>3.</td>
-          <td><input type="text" name="expenseDesc" value="account name"></td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
           <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
         </tr>
         <tr>
-          <td></td>
+          <td>4.</td>
           <td><input type="text" name="incomeDesc"></td>
           <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
           <td>4.</td>
-          <td><input type="text" name="expenseDesc" value="account name"></td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
           <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
         </tr>
         <tr>
-          <td></td>
+          <td>5.</td>
           <td><input type="text" name="incomeDesc"></td>
           <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
           <td>5.</td>
-          <td><input type="text" name="expenseDesc" value="account name"></td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
           <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
         </tr>
       </tbody>
@@ -208,8 +214,8 @@
   </div> 
   
   <div class="hide-on-pdf">
-    <button type="button" onclick="addIncomeRow()">Add Income Row</button>
-    <button type="button" onclick="addExpenseRow()">Add Expense Row</button>
+    <button type="button" onclick="addRow()">Add Row</button>
+    <button type="button" id="reduceRowButton" onclick="reduceRow()">Reduce Last Row</button>
     <button type="button" id="downloadButton" onclick="generateJPEG()">Download Report (JPEG)</button>
   </div>
 </div>
@@ -277,9 +283,6 @@
     const now = new Date();
     
     // 1. Format for display (DD Mon YYYY)
-    const dateOptionsDisplay = { day: '2-digit', month: 'short', year: 'numeric' };
-    
-    // Custom formatting function to get '23 Nov 2025'
     const day = now.getDate().toString().padStart(2, '0');
     const month = now.toLocaleDateString('en-US', { month: 'short' });
     const year = now.getFullYear();
@@ -314,28 +317,14 @@
     document.getElementById('cashInWords').textContent = numberToWords(Math.round(cashInHand));
   }
 
-  function addIncomeRow() {
+  // Function to add one full row
+  function addRow() {
     const tableBody = document.getElementById('incomeExpenseBody');
     const newRow = tableBody.insertRow(-1);
     newRow.innerHTML = `
       <td></td>
       <td><input type="text" name="incomeDesc"></td>
       <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
-      <td></td>
-      <td></td>
-      <td></td>
-    `;
-    updateRowNumbers();
-    calculateTotals();
-  }
-
-  function addExpenseRow() {
-    const tableBody = document.getElementById('incomeExpenseBody');
-    const newRow = tableBody.insertRow(-1);
-    newRow.innerHTML = `
-      <td></td>
-      <td></td>
-      <td></td>
       <td></td>
       <td><input type="text" name="expenseDesc"></td>
       <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
@@ -344,28 +333,32 @@
     calculateTotals();
   }
 
+  // New function to remove the last row
+  function reduceRow() {
+    const tableBody = document.getElementById('incomeExpenseBody');
+    // Ensure there are rows to remove (checking if we are above the minimum initial rows, e.g., 2)
+    if (tableBody.rows.length > 2) { 
+        tableBody.deleteRow(tableBody.rows.length - 1);
+        updateRowNumbers();
+        calculateTotals();
+    } else {
+        alert("Cannot remove more rows. At least 2 rows must remain.");
+    }
+  }
+
   function updateRowNumbers() {
     const incomeRows = document.querySelectorAll('#incomeExpenseBody tr');
     let incomeCounter = 1;
     let expenseCounter = 1;
 
     incomeRows.forEach(row => {
-      const incomeInput = row.cells[1].querySelector('input[name="incomeDesc"]');
-      const expenseInput = row.cells[4].querySelector('input[name="expenseDesc"]');
-      
-      if (row.cells[0].textContent.trim() !== '' || incomeInput) {
-          row.cells[0].textContent = (incomeCounter > 0 ? ${incomeCounter}. : '');
-          incomeCounter++;
-      } else {
-          row.cells[0].textContent = '';
-      }
+      // Update Income Serial Number (Column 0)
+      row.cells[0].textContent = ${incomeCounter}.;
+      incomeCounter++;
 
-      if (row.cells[3].textContent.trim() !== '' || expenseInput) {
-          row.cells[3].textContent = (expenseCounter > 0 ? ${expenseCounter}. : '');
-          expenseCounter++;
-      } else {
-          row.cells[3].textContent = '';
-      }
+      // Update Expense Serial Number (Column 3)
+      row.cells[3].textContent = ${expenseCounter}.;
+      expenseCounter++;
     });
   }
 
@@ -398,7 +391,9 @@
       placeholders.forEach(item => {
         item.tempElement.parentNode.replaceChild(item.originalElement, item.tempElement);
       });
+      // Recalculate totals and update numbers after restoring
       calculateTotals(); 
+      updateRowNumbers();
     });
   }
 
@@ -409,6 +404,5 @@
     updateRowNumbers();
   };
 </script>
-
 </body>
 </html>
