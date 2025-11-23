@@ -68,10 +68,11 @@
     text-align: right; /* Amounts align RIGHT */
   }
   
-  /* 3. Main Table Footer (Totals Row) - LABELS LEFT, AMOUNTS RIGHT */
-  #report-content table tfoot .bold-row td:nth-child(1) /* TOTAL CASH - Label (Colspan=2) */
+  /* 3. Main Table Footer (Totals Row) */
+  #report-content table tfoot .bold-row td:nth-child(1) /* **TOTAL CASH - Label (Colspan=2)** */
   {
-      text-align: left; /* Label aligned left within its colspan cell */
+      text-align: right; /* Label aligned left within its colspan cell */
+      font-weight: bold; /* ADDED BOLD */
   }
   
   /* TOTAL INCOME Amount */
@@ -84,7 +85,8 @@
   /* TOTAL SPENDS - Label (Colspan=2) */
   #report-content table tfoot .bold-row td:nth-child(3) 
   {
-      text-align: left; /* Label aligned left within its colspan cell */
+      text-align: right; /* Label aligned left within its colspan cell */
+      font-weight: bold; /* ADDED BOLD */
   }
 
   /* TOTAL SPENDS Amount */
@@ -149,10 +151,51 @@
   }
   .cash-in-words-row td {
     font-weight: bold;
-    font-style: italic;
     background-color: #e9e9e9;
     padding: 10px;
     text-align: center;
+  }
+  
+  /* --- IMAGE STYLES (Updated for multiple images) --- */
+  #image-upload-section {
+    padding: 10px 0 10px 0;
+    text-align: center;
+  }
+  
+  .image-container {
+    text-align: center;
+    padding: 10px 0;
+    border-top: 1px solid #ccc; /* Separator line for clarity */
+    margin-top: 20px;
+  }
+  
+  /* Container for the uploaded images - enables centering multiple images */
+  #images-preview-container {
+    display: flex;
+    flex-wrap: wrap; /* Allows images to wrap to the next line */
+    justify-content: center; /* Centers the images horizontally */
+    gap: 10px; /* Space between images */
+    padding: 10px 0;
+  }
+  
+  /* Style for each image */
+  .attached-image-thumbnail {
+    max-width: 150px; /* Max width for each thumbnail */
+    height: auto;
+    border: 1px dashed #ccc;
+    padding: 5px;
+    display: block; 
+  }
+  
+  /* Style for placeholder if no images are attached */
+  #no-images-placeholder {
+      font-style: italic;
+      color: #666;
+  }
+  
+  /* Class to hide elements when empty/not in use */
+  .hidden {
+      display: none !important;
   }
   
   /* --- INPUT & BUTTON STYLES (Visible on Screen Only) --- */
@@ -179,14 +222,23 @@
   button#reduceRowButton {
     background-color: #dc3545; /* Red color for removal */
   }
-  button#downloadButton {
-    background-color: #28a745; 
+  button#downloadButtonWithImg {
+    background-color: #009688; /* Teal color for images */
+  }
+  button#downloadButtonNoImg {
+    background-color: #28a745; /* Green color for data only */
   }
   button:hover {
     background-color: #0056b3;
   }
   button#reduceRowButton:hover {
     background-color: #c82333;
+  }
+  
+  /* Checkbox styling */
+  .checkbox-container {
+      margin: 10px 0;
+      text-align: center;
   }
 </style>
 </head>
@@ -196,12 +248,12 @@
   
   <div id="report-content"> 
     <div class="header">
-      <p style="font-weight: bold;">RESTRICTED</p>
       <h1>KILOFAR CORPORATION</h1>
       <h2>DAILY INCOME & EXPENDITURE</h2>
       <p><span id="currentDate"></span></p> 
     </div>
 
+    
     <table>
       <thead>
         <tr>
@@ -215,13 +267,21 @@
         <tr>
           <td>1.</td>
           <td>Previous Balance -</td>
-          <td><input type="number" name="incomeAmount" value="00" oninput="calculateTotals()"></td>
+          <td><input type="number" name="incomeAmount" value="0" oninput="calculateTotals()"></td>
           <td>1.</td>
           <td><input type="text" name="expenseDesc" value=""></td>
           <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
         </tr>
 
         <tr>
+          <td>2.</td>
+          <td><input type="text" name="incomeDesc" value=""></td>
+          <td><input type="number" name="incomeAmount" value="00" oninput="calculateTotals()"></td>
+          <td>2.</td>
+          <td><input type="text" name="expenseDesc" value=""></td>
+          <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
+        </tr>
+        <tr>
           <td>3.</td>
           <td><input type="text" name="incomeDesc"></td>
           <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
@@ -234,23 +294,15 @@
           <td><input type="text" name="incomeDesc"></td>
           <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
           <td>4.</td>
-          <td><input type="text" name="expenseDesc"></td>
-          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
-        </tr>
-        <tr>
-          <td>5.</td>
-          <td><input type="text" name="incomeDesc"></td>
-          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
-          <td>5.</td>
           <td><input type="text" name="expenseDesc"></td>
           <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
         </tr>
       </tbody>
       <tfoot>
         <tr class="bold-row">
-          <td colspan="2">TOTAL CASH -</td>
+          <td colspan="2">TOTAL CASH</td>
           <td id="totalIncome">0</td>
-          <td colspan="2">TOTAL SPENDS -</td>
+          <td colspan="2">TOTAL SPENDS</td>
           <td id="totalSpends">0</td>
         </tr>
       </tfoot>
@@ -266,15 +318,15 @@
         </thead>
         <tbody>
           <tr class="bold-row">
-            <td>TOTAL CASH -</td>
+            <td>TOTAL CASH</td>
             <td id="finalTotalIncome">0</td>
           </tr>
           <tr class="bold-row">
-            <td>TOTAL SPENDS -</td>
+            <td>TOTAL SPENDS</td>
             <td id="finalTotalSpends">0</td>
           </tr>
           <tr class="bold-row">
-            <td>CASH IN HAND-</td>
+            <td>CASH IN HAND</td>
             <td id="cashInHand">0</td>
           </tr>
         </tbody>
@@ -287,17 +339,35 @@
         </tbody>
       </table>
     </div>
+
+    <div class="image-container" id="images-display-container">
+        <h3 style="margin-bottom: 10px; color: #0056b3;">Attached Documents</h3>
+        <div id="images-preview-container">
+            </div>
+        <p id="no-images-placeholder">No images currently attached.</p>
+    </div>
+
   </div> 
   
   <div class="hide-on-pdf">
+    
+    <div id="image-upload-section">
+      <label for="imageUpload">Attach Multiple Images:</label>
+      <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)" multiple>
+      <button onclick="clearImages()">Clear All Images</button>
+    </div>
+    
     <button type="button" onclick="addRow()">Add Row</button>
     <button type="button" id="reduceRowButton" onclick="reduceRow()">Reduce Last Row</button>
-    <button type="button" id="downloadButton" onclick="generateReport()">Download Report (PDF)</button>
+    
+    <hr>
+    <button type="button" id="downloadButtonWithImg" onclick="generateReport(true)">Download PDF (With Images)</button>
+    <button type="button" id="downloadButtonNoImg" onclick="generateReport(false)">Download PDF (Data Only)</button>
   </div>
 </div>
 
 <script>
-  // --- CASH IN WORDS UTILITY FUNCTION ---
+  // --- CASH IN WORDS UTILITY FUNCTION (Unchanged) ---
   const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
   const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
@@ -353,7 +423,7 @@
     return result.trim() + ' Only';
   }
   
-  // Custom function to format number with commas
+  // Custom function to format number with commas (Unchanged)
   const formatNumberWithCommas = (num) => {
       if (typeof num === 'number') {
           return num.toLocaleString('en-US');
@@ -361,12 +431,11 @@
       return num;
   };
 
-  // --- REPORT GENERATION FUNCTIONS ---
+  // --- REPORT GENERATION FUNCTIONS (Mostly Unchanged) ---
 
   function setDateTime() {
     const now = new Date();
     
-    // 1. Format for display (DD Mon YYYY) and BOLD it
     const day = now.getDate().toString().padStart(2, '0');
     const month = now.toLocaleDateString('en-US', { month: 'short' });
     const year = now.getFullYear();
@@ -374,7 +443,6 @@
     
     document.getElementById('currentDate').innerHTML = formattedDateDisplay;
 
-    // 2. Format for filename (DD_Mon_YYYY)
     const fileNameSuffix = `${day}_${month}_${year}`.toUpperCase();
     
     return fileNameSuffix;
@@ -393,19 +461,16 @@
 
     const cashInHand = totalIncome - totalSpends;
     
-    // Apply comma formatting to display elements
     document.getElementById('totalIncome').textContent = formatNumberWithCommas(totalIncome);
     document.getElementById('finalTotalIncome').textContent = formatNumberWithCommas(totalIncome);
     document.getElementById('totalSpends').textContent = formatNumberWithCommas(totalSpends);
     document.getElementById('finalTotalSpends').textContent = formatNumberWithCommas(totalSpends);
     document.getElementById('cashInHand').textContent = formatNumberWithCommas(cashInHand);
     
-    // Apply bold to the words output
     const words = numberToWords(Math.round(cashInHand));
     document.getElementById('cashInWords').innerHTML = `<strong>${words}</strong>`;
   }
 
-  // Function to add one full row
   function addRow() {
     const tableBody = document.getElementById('incomeExpenseBody');
     const newRow = tableBody.insertRow(-1);
@@ -421,7 +486,6 @@
     calculateTotals();
   }
 
-  // Function to remove the last row
   function reduceRow() {
     const tableBody = document.getElementById('incomeExpenseBody');
     const MIN_ROWS = 2; 
@@ -440,13 +504,11 @@
     let expenseCounter = 1;
 
     incomeRows.forEach(row => {
-      // Update Income Serial Number (Column 0)
-      row.cells[0].textContent = `${incomeCounter}.`;
-      incomeCounter++;
+        row.cells[0].textContent = `${incomeCounter}.`;
+        incomeCounter++;
 
-      // Update Expense Serial Number (Column 3)
-      row.cells[3].textContent = `${expenseCounter}.`;
-      expenseCounter++;
+        row.cells[3].textContent = `${expenseCounter}.`;
+        expenseCounter++;
     });
   }
   
@@ -458,20 +520,75 @@
           }
       });
   }
+  
+  function clearImages() {
+    const previewContainer = document.getElementById('images-preview-container');
+    const placeholder = document.getElementById('no-images-placeholder');
+    const fileInput = document.getElementById('imageUpload');
+    
+    previewContainer.innerHTML = ''; 
+    placeholder.classList.remove('hidden'); 
+    fileInput.value = ''; 
+    
+    // Hide the container if no images are present
+    const imageContainer = document.getElementById('images-display-container');
+    imageContainer.classList.add('hidden');
+  }
+
+  function handleImageUpload(event) {
+    const files = event.target.files;
+    const previewContainer = document.getElementById('images-preview-container');
+    const placeholder = document.getElementById('no-images-placeholder');
+    const imageContainer = document.getElementById('images-display-container');
 
 
-  // --- PDF GENERATION LOGIC ---
-  function generateReport() {
+    if (files.length > 0) {
+        previewContainer.innerHTML = ''; 
+        placeholder.classList.add('hidden'); 
+        imageContainer.classList.remove('hidden'); // Show container when images are loaded
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result; 
+                img.alt = `Attached Image ${i + 1}`;
+                img.classList.add('attached-image-thumbnail'); 
+                
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file); 
+        }
+    } else {
+        placeholder.classList.remove('hidden'); 
+        imageContainer.classList.add('hidden'); // Hide container if user removes all files
+    }
+  }
+
+
+  // --- MODIFIED PDF GENERATION LOGIC ---
+  function generateReport(includeImages) {
     const element = document.getElementById('report-content');
+    const imageContainer = document.getElementById('images-display-container');
     const fileNameSuffix = setDateTime(); 
-
-    // 1. Temporarily replace input fields with their comma-formatted text values for cleaner PDF
+    
+    // 1. CONDITIONAL IMAGE VISIBILITY: Hide the image container if requested
+    const wasHidden = imageContainer.classList.contains('hidden'); // Check original state
+    
+    if (includeImages) {
+        imageContainer.classList.remove('hidden');
+    } else {
+        imageContainer.classList.add('hidden');
+    }
+    
+    // 2. Temporary preparation for cleaner PDF (replace inputs with text)
     const inputs = element.querySelectorAll('input');
     const placeholders = [];
-
+    
     inputs.forEach(input => {
       const span = document.createElement('span');
-      // For the final PDF, format the number value with commas
       if (input.type === 'number') {
            const rawValue = parseFloat(input.value);
            span.textContent = formatNumberWithCommas(rawValue || 0);
@@ -483,18 +600,26 @@
       placeholders.push({ originalElement: input, tempElement: span });
     });
 
-    // 2. Generate the PDF
+    // 3. Generate the PDF
     html2pdf(element, {
       margin: 10,
-      filename: `Daily_Report_${fileNameSuffix}.pdf`, // PDF EXTENSION
+      filename: `Daily_Report_${fileNameSuffix}${includeImages ? '_WithImages' : '_DataOnly'}.pdf`, // Dynamic Filename
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
     }).then(() => {
-      // 3. Restore the original input fields after PDF generation is complete
+      // 4. Restore the original input fields
       placeholders.forEach(item => {
         item.tempElement.parentNode.replaceChild(item.originalElement, item.tempElement);
       });
+      
+      // 5. Restore Image container visibility to its ORIGINAL state
+      if (wasHidden) {
+           imageContainer.classList.add('hidden');
+      } else {
+           imageContainer.classList.remove('hidden'); 
+      }
+      
       // Recalculate totals and update numbers after restoring
       calculateTotals(); 
       updateRowNumbers();
@@ -507,6 +632,14 @@
     formatInitialInputs(); 
     calculateTotals();
     updateRowNumbers();
+    
+    // Initial check: if no images are loaded, hide the container by default
+    const imageContainer = document.getElementById('images-display-container');
+    const hasImages = imageContainer.querySelectorAll('.attached-image-thumbnail').length > 0;
+    
+    if (!hasImages) {
+         imageContainer.classList.add('hidden');
+    }
   };
 </script>
 
