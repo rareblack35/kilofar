@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Daily Income & Expenditure Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  /* --- STYLES FOR SCREEN DISPLAY & JPEG OUTPUT --- */
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 20px;
+  }
+  .container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: auto;
+  }
+  #report-content {
+    padding: 10px;
+  }
+  h2 {
+    text-align: center;
+    color: #0056b3;
+    margin-top: 5px; 
+    margin-bottom: 5px; 
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  table, th, td {
+    border: 1px solid #ddd;
+  }
+  th, td {
+    padding: 8px;
+    text-align: left;
+    page-break-inside: avoid;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 10px; 
+  }
+  .header h1 {
+    margin: 0; 
+    padding-bottom: 2px; 
+    color: #333;
+  }
+  .header p {
+    margin: 0; 
+    font-size: 0.9em;
+    color: #666;
+  }
+  .header p:first-child { 
+    margin-bottom: 5px;
+  }
+  .total-section {
+    margin-top: 30px;
+    border-top: 2px solid #0056b3;
+    padding-top: 15px;
+  }
+  .total-section table {
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cash-in-words-row td {
+    font-weight: bold;
+    font-style: italic;
+    background-color: #e9e9e9;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  /* --- INPUT & BUTTON STYLES (Visible on Screen Only) --- */
+  input[type="text"], input[type="number"] {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin: 4px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+    margin-right: 5px;
+  }
+  button#reduceRowButton {
+    background-color: #dc3545; /* Red color for removal */
+  }
+  button#downloadButton {
+    background-color: #28a745; 
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  button#reduceRowButton:hover {
+    background-color: #c82333;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div id="report-content"> 
+    <div class="header">
+      <p style="font-weight: bold;">RESTRICTED</p>
+      <h1>KILOFAR CORPORATION</h1>
+      <h2>DAILY INCOME & EXPENDITURE</h2>
+      <p><span id="currentDate"></span></p> 
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th colspan="2">INCOME/CASH IN HAND</th>
+          <th>TK</th>
+          <th colspan="2">EXPENSE DETAILS</th>
+          <th>TK</th>
+        </tr>
+      </thead>
+      <tbody id="incomeExpenseBody">
+        <tr>
+          <td>1.</td>
+          <td>Previous Balance -</td>
+          <td><input type="number" name="incomeAmount" value="00" oninput="calculateTotals()"></td>
+          <td>1.</td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
+          <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
+        </tr>
+
+        <tr>
+          <td>3.</td>
+          <td><input type="text" name="incomeDesc"></td>
+          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
+          <td>3.</td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
+          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
+        </tr>
+        <tr>
+          <td>4.</td>
+          <td><input type="text" name="incomeDesc"></td>
+          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
+          <td>4.</td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
+          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
+        </tr>
+        <tr>
+          <td>5.</td>
+          <td><input type="text" name="incomeDesc"></td>
+          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
+          <td>5.</td>
+          <td><input type="text" name="expenseDesc" value="Acc"></td>
+          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">TOTAL CASH -</td>
+          <td id="totalIncome">0</td>
+          <td colspan="2">TOTAL SPENDS -</td>
+          <td id="totalSpends">0</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="total-section">
+      <table>
+        <thead>
+          <tr>
+            <th>TOTAL INCOME & EXPENDITURE</th>
+            <th>TK</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>TOTAL CASH -</td>
+            <td id="finalTotalIncome">0</td>
+          </tr>
+          <tr>
+            <td>TOTAL SPENDS -</td>
+            <td id="finalTotalSpends">0</td>
+          </tr>
+          <tr>
+            <td>CASH IN HAND-</td>
+            <td id="cashInHand">0</td>
+          </tr>
+        </tbody>
+      </table>
+      <table style="margin-top: 10px;">
+        <tbody>
+          <tr class="cash-in-words-row">
+            <td colspan="2">CASH IN HAND (IN WORDS): <span id="cashInWords"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div> 
+  
+  <div class="hide-on-pdf">
+    <button type="button" onclick="addRow()">Add Row</button>
+    <button type="button" id="reduceRowButton" onclick="reduceRow()">Reduce Last Row</button>
+    <button type="button" id="downloadButton" onclick="generateJPEG()">Download Report (JPEG)</button>
+  </div>
+</div>
+
+<script>
+  // --- CASH IN WORDS UTILITY FUNCTION ---
+  const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  function numberToWords(num) {
+    if ((num = Math.round(num).toString()).length > 9) return 'overflow'; 
+    
+    num = ('000000000' + num).substr(-9); 
+    let crore = num.substr(0, 2);
+    let lakh = num.substr(2, 2);
+    let thousand = num.substr(4, 2);
+    let hundred = num.substr(6, 3);
+    
+    let result = '';
+
+    const convertLessThan100 = (n) => {
+        let output = '';
+        if (n < 20) {
+            output += a[n];
+        } else {
+            output += b[Math.floor(n / 10)] + ' ' + a[n % 10];
+        }
+        return output.trim();
+    };
+
+    if (parseInt(crore) !== 0) {
+        result += convertLessThan100(parseInt(crore)) + ' Crore ';
+    }
+    if (parseInt(lakh) !== 0) {
+        result += convertLessThan100(parseInt(lakh)) + ' Lakh ';
+    }
+    if (parseInt(thousand) !== 0) {
+        result += convertLessThan100(parseInt(thousand)) + ' Thousand ';
+    }
+    
+    if (parseInt(hundred) !== 0) {
+        const h = hundred.substr(0, 1);
+        const t = hundred.substr(1, 2);
+        
+        if (parseInt(h) !== 0) {
+            result += a[parseInt(h)] + ' Hundred ';
+        }
+        
+        const remaining = parseInt(t);
+        if (remaining !== 0) {
+            result += (result.length > 0 && parseInt(h) !== 0 ? 'and ' : '') + convertLessThan100(remaining);
+        }
+    }
+
+    if (result.trim() === '') {
+        return 'Zero Only';
+    }
+
+    return result.trim() + ' Only';
+  }
+
+  // --- REPORT GENERATION FUNCTIONS ---
+
+  function setDateTime() {
+    const now = new Date();
+    
+    // 1. Format for display (DD Mon YYYY)
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = now.toLocaleDateString('en-US', { month: 'short' });
+    const year = now.getFullYear();
+    const formattedDateDisplay = `${day} ${month} ${year}`;
+    
+    document.getElementById('currentDate').textContent = formattedDateDisplay;
+
+    // 2. Format for filename (DD_Mon_YYYY)
+    const fileNameSuffix = formattedDateDisplay.toUpperCase().replace(/\s/g, '_');
+    
+    return fileNameSuffix;
+  }
+
+  function calculateTotals() {
+    let totalIncome = 0;
+    document.querySelectorAll('input[name="incomeAmount"]').forEach(input => {
+      totalIncome += parseFloat(input.value) || 0;
+    });
+    document.getElementById('totalIncome').textContent = totalIncome.toLocaleString();
+    document.getElementById('finalTotalIncome').textContent = totalIncome.toLocaleString();
+
+    let totalSpends = 0;
+    document.querySelectorAll('input[name="expenseAmount"]').forEach(input => {
+      totalSpends += parseFloat(input.value) || 0;
+    });
+    document.getElementById('totalSpends').textContent = totalSpends.toLocaleString();
+    document.getElementById('finalTotalSpends').textContent = totalSpends.toLocaleString();
+
+    const cashInHand = totalIncome - totalSpends;
+    document.getElementById('cashInHand').textContent = cashInHand.toLocaleString();
+    
+    document.getElementById('cashInWords').textContent = numberToWords(Math.round(cashInHand));
+  }
+
+  // Function to add one full row
+  function addRow() {
+    const tableBody = document.getElementById('incomeExpenseBody');
+    const newRow = tableBody.insertRow(-1);
+    newRow.innerHTML = `
+      <td></td>
+      <td><input type="text" name="incomeDesc"></td>
+      <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
+      <td></td>
+      <td><input type="text" name="expenseDesc"></td>
+      <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
+    `;
+    updateRowNumbers();
+    calculateTotals();
+  }
+
+  // New function to remove the last row
+  function reduceRow() {
+    const tableBody = document.getElementById('incomeExpenseBody');
+    // Ensure there are rows to remove (checking if we are above the minimum initial rows, e.g., 2)
+    if (tableBody.rows.length > 2) { 
+        tableBody.deleteRow(tableBody.rows.length - 1);
+        updateRowNumbers();
+        calculateTotals();
+    } else {
+        alert("Cannot remove more rows. At least 2 rows must remain.");
+    }
+  }
+
+  function updateRowNumbers() {
+    const incomeRows = document.querySelectorAll('#incomeExpenseBody tr');
+    let incomeCounter = 1;
+    let expenseCounter = 1;
+
+    incomeRows.forEach(row => {
+      // Update Income Serial Number (Column 0)
+      row.cells[0].textContent = `${incomeCounter}.`;
+      incomeCounter++;
+
+      // Update Expense Serial Number (Column 3)
+      row.cells[3].textContent = `${expenseCounter}.`;
+      expenseCounter++;
+    });
+  }
+
+  // --- JPEG GENERATION LOGIC ---
+  function generateJPEG() {
+    const element = document.getElementById('report-content');
+    const fileNameSuffix = setDateTime(); // Get the filename suffix (DD_MON_YYYY)
+
+    // 1. Temporarily replace input fields with their text values for cleaner image
+    const inputs = element.querySelectorAll('input');
+    const placeholders = [];
+
+    inputs.forEach(input => {
+      const span = document.createElement('span');
+      span.textContent = input.value;
+      
+      input.parentNode.replaceChild(span, input);
+      placeholders.push({ originalElement: input, tempElement: span });
+    });
+
+    // 2. Generate the JPEG
+    html2pdf(element, {
+      margin: 10,
+      filename: `Daily_Report_${fileNameSuffix}.jpeg`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+    }).then(() => {
+      // 3. Restore the original input fields after JPEG generation is complete
+      placeholders.forEach(item => {
+        item.tempElement.parentNode.replaceChild(item.originalElement, item.tempElement);
+      });
+      // Recalculate totals and update numbers after restoring
+      calculateTotals(); 
+      updateRowNumbers();
+    });
+  }
+
+  // Initial setup on page load
+  window.onload = () => {
+    setDateTime();
+    calculateTotals();
+    updateRowNumbers();
+  };
+</script>
+
+</body>
+</html>
