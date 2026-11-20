@@ -1,647 +1,604 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Daily Income & Expenditure Report</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-  /* --- STYLES FOR SCREEN DISPLAY & PDF OUTPUT --- */
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    margin: 20px;
-  }
-  .container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: auto;
-  }
-  #report-content {
-    padding: 10px;
-  }
-  
-  /* --- REVISED HEADING GAPS (H1 and H2) --- */
-  h2 {
-    text-align: center;
-    color: #0056b3;
-    /* Reduced margin for tighter spacing */
-    margin-top: 2px; 
-    margin-bottom: 2px; 
-  }
-  /* ------------------------------------------- */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Income & Expenditure Report - KILOFAR CORPORATION</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    /* Exact report typography and print-ready crisp borders */
+    body {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif;
+      background-color: #f3f4f6;
+      color: #000000;
+    }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  table, th, td {
-    border: 1px solid #ddd;
-  }
-  th, td {
-    padding: 8px;
-    page-break-inside: avoid;
-  }
-  
-  /* --- CORRECTED ALIGNMENT STYLES --- */
+    #report-wrapper {
+      background-color: #ffffff;
+      color: #000000;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
 
-  /* 1. Header Cells (Th) - Centered (Correct) */
-  #report-content table thead th {
-    text-align: center; 
-  }
+    #report-content {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 16px 20px 24px 20px;
+    }
 
-  /* 2. Main Table Body (Income/Expense Rows) - LABELS LEFT, AMOUNTS RIGHT */
-  #incomeExpenseBody td:nth-child(1), /* Income Serial No. */
-  #incomeExpenseBody td:nth-child(2), /* Income Description */
-  #incomeExpenseBody td:nth-child(4), /* Expense Serial No. */
-  #incomeExpenseBody td:nth-child(5)  /* Expense Description */
-  {
-    text-align: left; /* Labels align LEFT */
-  }
-
-  #incomeExpenseBody td:nth-child(3), /* Income Amount (TK) */
-  #incomeExpenseBody td:nth-child(6)  /* Expense Amount (TK) */
-  {
-    text-align: right; /* Amounts align RIGHT */
-  }
-  
-  /* 3. Main Table Footer (Totals Row) */
-  #report-content table tfoot .bold-row td:nth-child(1) /* **TOTAL CASH - Label (Colspan=2)** */
-  {
-      text-align: right; /* Label aligned left within its colspan cell */
-      font-weight: bold; /* ADDED BOLD */
-  }
-  
-  /* TOTAL INCOME Amount */
-  #report-content table tfoot .bold-row td:nth-child(2) /* This is the actual total income cell */
-  {
-      text-align: right; /* Amount aligned RIGHT */
-      font-weight: bold;
-  }
-  
-  /* TOTAL SPENDS - Label (Colspan=2) */
-  #report-content table tfoot .bold-row td:nth-child(3) 
-  {
-      text-align: right; /* Label aligned left within its colspan cell */
-      font-weight: bold; /* ADDED BOLD */
-  }
-
-  /* TOTAL SPENDS Amount */
-  #report-content table tfoot .bold-row td:nth-child(4) /* This is the actual total spends cell */
-  {
-      text-align: right; /* Amount aligned RIGHT */
-      font-weight: bold;
-  }
-  
-  /* Override for input fields to keep text readable/aligned inside the box */
-  input[type="text"] {
-      text-align: left; 
-  }
-  input[type="number"] {
-      text-align: right; /* Align numbers right inside their box */
-  }
-  
-  th {
-    background-color: #f2f2f2;
-  }
-  .header {
-    text-align: center;
-    /* Reduced margin for tighter spacing between header elements and table */
-    margin-bottom: 5px; 
-  }
-  .header h1 {
-    margin: 0; 
-    padding-bottom: 2px; 
-    color: #333;
-    /* Reduced margin for tighter spacing */
-    margin-top: 5px; 
-    margin-bottom: 5px; 
-  }
-  .header p {
-    margin: 0; 
-    font-size: 0.9em;
-    color: #000;
-  }
-  .header p:first-child { 
-    margin-bottom: 5px;
-  }
-  .total-section {
-    margin-top: 30px;
-    border-top: 2px solid #0056b3;
-    padding-top: 15px;
-  }
-  .total-section table {
-    width: 50%;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  /* BOLD STYLES FOR SUMMARY TOTALS (Below the main table) */
-  .total-section .bold-row td {
-      font-weight: bold;
-  }
-  .total-section .bold-row td:nth-child(1) {
-    text-align: left; /* Keep summary labels left-aligned */
-  }
-  /* Ensure the amount cells in the summary table are aligned right for currency appearance */
-  .total-section table td:nth-child(2) {
-      text-align: right; /* Summary Amounts (finalTotalIncome, cashInHand) align RIGHT */
-  }
-  .cash-in-words-row td {
-    font-weight: bold;
-    background-color: #e9e9e9;
-    padding: 10px;
-    text-align: center;
-  }
-  
-  /* --- IMAGE STYLES (Updated for multiple images) --- */
-  #image-upload-section {
-    padding: 10px 0 10px 0;
-    text-align: center;
-  }
-  
-  .image-container {
-    text-align: center;
-    padding: 10px 0;
-    border-top: 1px solid #ccc; /* Separator line for clarity */
-    margin-top: 20px;
-  }
-  
-  /* Container for the uploaded images - enables centering multiple images */
-  #images-preview-container {
-    display: flex;
-    flex-wrap: wrap; /* Allows images to wrap to the next line */
-    justify-content: center; /* Centers the images horizontally */
-    gap: 10px; /* Space between images */
-    padding: 10px 0;
-  }
-  
-  /* Style for each image */
-  .attached-image-thumbnail {
-    max-width: 150px; /* Max width for each thumbnail */
-    height: auto;
-    border: 1px dashed #ccc;
-    padding: 5px;
-    display: block; 
-  }
-  
-  /* Style for placeholder if no images are attached */
-  #no-images-placeholder {
-      font-style: italic;
-      color: #666;
-  }
-  
-  /* Class to hide elements when empty/not in use */
-  .hidden {
-      display: none !important;
-  }
-  
-  /* --- INPUT & BUTTON STYLES (Visible on Screen Only) --- */
-  input[type="text"], input[type="number"] {
-    width: calc(100% - 16px);
-    padding: 8px;
-    margin: 4px 0;
-    display: inline-block;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    margin-right: 5px;
-  }
-  button#reduceRowButton {
-    background-color: #dc3545; /* Red color for removal */
-  }
-  button#downloadButtonWithImg {
-    background-color: #009688; /* Teal color for images */
-  }
-  button#downloadButtonNoImg {
-    background-color: #28a745; /* Green color for data only */
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  button#reduceRowButton:hover {
-    background-color: #c82333;
-  }
-  
-  /* Checkbox styling */
-  .checkbox-container {
-      margin: 10px 0;
+    /* Header styling matching reference image */
+    .report-header {
       text-align: center;
-  }
-</style>
-</head>
-<body>
+      margin-bottom: 18px;
+    }
 
-<div class="container">
-  
-  <div id="report-content"> 
-    <div class="header">
-      <h1>KILOFAR CORPORATION</h1>
-      <h2>DAILY INCOME & EXPENDITURE</h2>
-      <p><span id="currentDate"></span></p> 
+    .report-header-line {
+      display: block;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.32;
+      letter-spacing: 0.2px;
+      color: #000000;
+    }
+
+    .report-header-line span,
+    .date-display-text {
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+
+    /* Account Table Styling */
+    .account-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 24px;
+      font-size: 16.5px;
+      color: #000000;
+    }
+
+    .account-table:last-child {
+      margin-bottom: 0;
+    }
+
+    .account-table th,
+    .account-table td {
+      border: 1px solid #000000;
+      padding: 4px 8px;
+      vertical-align: middle;
+      color: #000000;
+      height: 31px;
+      word-wrap: break-word;
+    }
+
+    /* Section Title Row */
+    .section-title-cell {
+      text-align: center;
+      font-size: 19px;
+      font-weight: 700;
+      padding: 6px 8px !important;
+    }
+
+    .section-title-cell span {
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+
+    /* Column Header Row */
+    .col-header-cell {
+      text-align: center;
+      font-weight: 700;
+      font-size: 16.5px;
+      padding: 5px 8px !important;
+    }
+
+    /* Specific Column Widths matching reference proportions */
+    .col-sn {
+      width: 4.5%;
+      text-align: left;
+    }
+
+    .col-desc {
+      width: 33%;
+      text-align: left;
+    }
+
+    .col-tk {
+      width: 12.5%;
+      text-align: right;
+      font-weight: 700;
+    }
+
+    /* Item row text styling */
+    .item-sn {
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .item-desc-bold {
+      font-weight: 700;
+    }
+
+    .item-desc-regular {
+      font-weight: 400;
+    }
+
+    /* Summary Rows */
+    .summary-label-left {
+      font-weight: 700;
+      text-align: left;
+      padding-left: 8px !important;
+    }
+
+    .summary-label-center-right {
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .summary-amount {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Stepped bottom-right empty cells (no borders on right half for rows B & C) */
+    .no-border-cell {
+      border: none !important;
+      background: transparent !important;
+    }
+
+    /* Interactive Inputs inside Table */
+    .table-input-text {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: inherit;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-text:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    .table-input-num {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: 700;
+      text-align: right;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-num:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    /* Remove number input spinners for cleaner look */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* PDF / Print Clean Mode */
+    .pdf-export-mode .table-input-text,
+    .pdf-export-mode .table-input-num,
+    .pdf-export-mode .header-date-input {
+      border: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
+    /* Editable underlined date input in header */
+    .header-date-input {
+      font-family: inherit;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.32;
+      letter-spacing: 0.2px;
+      color: #000000;
+      text-align: center;
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+      border: 1px dashed transparent;
+      border-radius: 3px;
+      background: transparent;
+      outline: none;
+      width: auto;
+      min-width: 190px;
+      max-width: 100%;
+      padding: 0 4px;
+    }
+
+    .header-date-input:hover,
+    .header-date-input:focus {
+      border-color: #94a3b8;
+      background-color: #f8fafc;
+    }
+
+    /* Attached Images / Vouchers Section - Clean Borderless Side-by-Side Layout */
+    .attached-images-section {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      page-break-inside: auto;
+    }
+
+    .attached-images-section.hidden {
+      display: none !important;
+    }
+
+    .receipt-img-wrapper {
+      position: relative;
+      flex: 1 1 calc(33.333% - 12px);
+      max-width: calc(33.333% - 10px);
+      min-width: 160px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Auto-size cleanly when only 1 or 2 images are added */
+    .attached-images-section[data-count="1"] .receipt-img-wrapper {
+      flex: 0 1 48%;
+      max-width: 48%;
+    }
+
+    .attached-images-section[data-count="2"] .receipt-img-wrapper {
+      flex: 1 1 calc(50% - 10px);
+      max-width: calc(50% - 8px);
+    }
+
+    @media (max-width: 600px) {
+      .receipt-img-wrapper,
+      .attached-images-section[data-count="1"] .receipt-img-wrapper,
+      .attached-images-section[data-count="2"] .receipt-img-wrapper {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+    }
+
+    .receipt-img-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .remove-image-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background-color: rgba(15, 23, 42, 0.75);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      opacity: 0.85;
+      transition: background-color 0.15s, opacity 0.15s;
+    }
+
+    .receipt-img-wrapper:hover .remove-image-btn,
+    .remove-image-btn:focus {
+      opacity: 1;
+      background-color: rgba(225, 29, 72, 0.95);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+      .no-print,
+      .hide-on-pdf {
+        display: none !important;
+      }
+      #report-wrapper {
+        box-shadow: none !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6">
+
+  <!-- Top Controls & Independent Row Management (Hidden in PDF & Print) -->
+  <div class="no-print hide-on-pdf max-w-[980px] mx-auto mb-4 bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div>
+        <h1 class="text-base font-bold text-slate-800">KILOFAR CORPORATION — Daily Income &amp; Expenditure</h1>
+        <p class="text-xs text-slate-500">Click any text, date, or amount directly in the sheet to edit. Independent income &amp; expense rows keep the opposite side bordered automatically.</p>
+      </div>
+
+      <!-- Date Picker & Export Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+          <label for="reportDatePicker" class="text-xs font-semibold text-slate-600">Pick Date:</label>
+          <input
+            type="date"
+            id="reportDatePicker"
+            value="2026-11-20"
+            onchange="syncDateFromPicker()"
+            class="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+          />
+        </div>
+
+        <button
+          type="button"
+          onclick="window.print()"
+          class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+        >
+          Print Sheet
+        </button>
+
+        <button
+          type="button"
+          id="downloadPdfBtn"
+          onclick="generatePDF()"
+          class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1.5"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Report (PDF)
+        </button>
+      </div>
     </div>
 
-    
-    <table>
-      <thead>
-        <tr>
-          <th colspan="2">INCOME/CASH IN HAND</th>
-          <th>TK</th>
-          <th colspan="2">EXPENSE DETAILS</th>
-          <th>TK</th>
-        </tr>
-      </thead>
-      <tbody id="incomeExpenseBody">
-        <tr>
-          <td>1.</td>
-          <td>Previous Balance -</td>
-          <td><input type="number" name="incomeAmount" value="0" oninput="calculateTotals()"></td>
-          <td>1.</td>
-          <td><input type="text" name="expenseDesc" value=""></td>
-          <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
-        </tr>
+    <!-- Independent Left (Income) & Right (Expense) Row Controls per Account -->
+    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <!-- Section 1 Controls -->
+      <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-xs font-bold text-slate-700 mb-2">1. Multipurpose Bldg Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
 
-        <tr>
-          <td>2.</td>
-          <td><input type="text" name="incomeDesc" value=""></td>
-          <td><input type="number" name="incomeAmount" value="00" oninput="calculateTotals()"></td>
-          <td>2.</td>
-          <td><input type="text" name="expenseDesc" value=""></td>
-          <td><input type="number" name="expenseAmount" value="00" oninput="calculateTotals()"></td>
-        </tr>
-        <tr>
-          <td>3.</td>
-          <td><input type="text" name="incomeDesc"></td>
-          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
-          <td>3.</td>
-          <td><input type="text" name="expenseDesc"></td>
-          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
-        </tr>
-        <tr>
-          <td>4.</td>
-          <td><input type="text" name="incomeDesc"></td>
-          <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
-          <td>4.</td>
-          <td><input type="text" name="expenseDesc"></td>
-          <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr class="bold-row">
-          <td colspan="2">TOTAL CASH</td>
-          <td id="totalIncome">0</td>
-          <td colspan="2">TOTAL SPENDS</td>
-          <td id="totalSpends">0</td>
-        </tr>
-      </tfoot>
-    </table>
+      <!-- Section 2 Controls -->
+      <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-xs font-bold text-slate-700 mb-2">2. Rent / Cash In Hand Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('cash', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('cash', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <div class="total-section">
-      <table>
+    <!-- Inline Notification Banner -->
+    <div id="statusToast" class="hidden mt-3 px-3 py-2 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200"></div>
+  </div>
+
+  <!-- Printable / PDF Report Sheet -->
+  <div id="report-wrapper" class="shadow-md rounded-sm overflow-x-auto">
+    <div id="report-content">
+      <!-- Centered Underlined Header -->
+      <div class="report-header">
+        <div class="report-header-line"><span>KILOFAR CORPORATION</span></div>
+        <div class="report-header-line"><span>DAILY INCOME &amp; EXPENDITURE</span></div>
+        <div class="report-header-line">
+          <input
+            type="text"
+            id="formattedDateInput"
+            class="header-date-input"
+            data-bold="true"
+            data-align="center"
+            data-underline="true"
+            value="20 NOVEMBER 26"
+            aria-label="Report Date"
+          />
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 1: MULTIPURPOSE BLDG ACCOUNT                      -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="bldgTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
         <thead>
           <tr>
-            <th style="text-align: center;">TOTAL INCOME & EXPENDITURE</th>
-            <th style="text-align: center;">TK</th>
+            <th colspan="6" class="section-title-cell">
+              <span>MULTIPURPOSE BLDG ACCOUNT</span>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
           </tr>
         </thead>
-        <tbody>
-          <tr class="bold-row">
-            <td>TOTAL CASH</td>
-            <td id="finalTotalIncome">0</td>
+        <tbody id="bldgBody"></tbody>
+        <tfoot>
+          <!-- Row A: TOTAL MONEY & TOTAL SPENDS -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="bldgTotalMoney">1,05,000</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="bldgTotalSpendsRight">0</td>
           </tr>
-          <tr class="bold-row">
-            <td>TOTAL SPENDS</td>
-            <td id="finalTotalSpends">0</td>
+          <!-- Row B: TOTAL SPENDS (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="bldgTotalSpendsLeft">0</td>
+            <td colspan="3" class="no-border-cell"></td>
           </tr>
-          <tr class="bold-row">
-            <td>CASH IN HAND</td>
-            <td id="cashInHand">0</td>
+          <!-- Row C: MULTIPURPOSE BLDG ACCOUNT BALANCE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">MULTIPURPOSE BLDG ACCOUNT -</td>
+            <td class="summary-amount" id="bldgNetBalance">1,05,000</td>
+            <td colspan="3" class="no-border-cell"></td>
           </tr>
-        </tbody>
+        </tfoot>
       </table>
-      <table style="margin-top: 10px;">
-        <tbody>
-          <tr class="cash-in-words-row">
-            <td colspan="2">CASH IN HAND (IN WORDS): <span id="cashInWords"></span></td>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 2: RENT / CASH IN HAND ACCOUNT                    -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="cashTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="6" class="section-title-cell">
+              <span>RENT / CASH IN HAND ACCOUNT</span>
+            </th>
           </tr>
-        </tbody>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
+          </tr>
+        </thead>
+        <tbody id="cashBody"></tbody>
+        <tfoot>
+          <!-- Row A: TOTAL MONEY & TOTAL SPENDS -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="cashTotalMoney">35,241</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="cashTotalSpendsRight">10,000</td>
+          </tr>
+          <!-- Row B: TOTAL SPENDS (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="cashTotalSpendsLeft">10,000</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+          <!-- Row C: CASH IN HAND ACCOUNT BALANCE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">CASH IN HAND ACCOUNT -</td>
+            <td class="summary-amount" id="cashNetBalance">25,241</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+        </tfoot>
       </table>
-    </div>
 
-    <div class="image-container" id="images-display-container">
-        <h3 style="margin-bottom: 10px; color: #0056b3;">Attached Documents</h3>
-        <div id="images-preview-container">
-            </div>
-        <p id="no-images-placeholder">No images currently attached.</p>
+      <!-- ========================================================= -->
+      <!-- ATTACHED RECEIPT IMAGES (Clean side-by-side row, no cards) -->
+      <!-- ========================================================= -->
+      <div id="attachedImagesSection" class="attached-images-section hidden" data-count="0"></div>
     </div>
-
-  </div> 
-  
-  <div class="hide-on-pdf">
-    
-    <div id="image-upload-section">
-      <label for="imageUpload">Attach Multiple Images:</label>
-      <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)" multiple>
-      <button onclick="clearImages()">Clear All Images</button>
-    </div>
-    
-    <button type="button" onclick="addRow()">Add Row</button>
-    <button type="button" id="reduceRowButton" onclick="reduceRow()">Reduce Last Row</button>
-    
-    <hr>
-    <button type="button" id="downloadButtonWithImg" onclick="generateReport(true)">Download PDF (With Images)</button>
-    <button type="button" id="downloadButtonNoImg" onclick="generateReport(false)">Download PDF (Data Only)</button>
   </div>
-</div>
 
-<script>
-  // --- CASH IN WORDS UTILITY FUNCTION (Unchanged) ---
-  const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
-  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-  function numberToWords(num) {
-    if ((num = Math.round(num).toString()).length > 9) return 'overflow'; 
-    
-    num = ('000000000' + num).substr(-9); 
-    let crore = num.substr(0, 2);
-    let lakh = num.substr(2, 2);
-    let thousand = num.substr(4, 2);
-    let hundred = num.substr(6, 3);
-    
-    let result = '';
-
-    const convertLessThan100 = (n) => {
-        let output = '';
-        if (n < 20) {
-            output += a[n];
-        } else {
-            output += b[Math.floor(n / 10)] + ' ' + a[n % 10];
-        }
-        return output.trim();
-    };
-
-    if (parseInt(crore) !== 0) {
-        result += convertLessThan100(parseInt(crore)) + ' Crore ';
-    }
-    if (parseInt(lakh) !== 0) {
-        result += convertLessThan100(parseInt(lakh)) + ' Lakh ';
-    }
-    if (parseInt(thousand) !== 0) {
-        result += convertLessThan100(parseInt(thousand)) + ' Thousand ';
-    }
-    
-    if (parseInt(hundred) !== 0) {
-        const h = hundred.substr(0, 1);
-        const t = hundred.substr(1, 2);
-        
-        if (parseInt(h) !== 0) {
-            result += a[parseInt(h)] + ' Hundred ';
-        }
-        
-        const remaining = parseInt(t);
-        if (remaining !== 0) {
-            result += (result.length > 0 && parseInt(h) !== 0 ? 'and ' : '') + convertLessThan100(remaining);
-        }
-    }
-
-    if (result.trim() === '') {
-        return 'Zero Only';
-    }
-
-    return result.trim() + ' Only';
-  }
-  
-  // Custom function to format number with commas (Unchanged)
-  const formatNumberWithCommas = (num) => {
-      if (typeof num === 'number') {
-          return num.toLocaleString('en-US');
-      }
-      return num;
-  };
-
-  // --- REPORT GENERATION FUNCTIONS (Mostly Unchanged) ---
-
-  function setDateTime() {
-    const now = new Date();
-    
-    const day = now.getDate().toString().padStart(2, '0');
-    const month = now.toLocaleDateString('en-US', { month: 'short' });
-    const year = now.getFullYear();
-    const formattedDateDisplay = `<strong>${day} ${month} ${year}</strong>`;
-    
-    document.getElementById('currentDate').innerHTML = formattedDateDisplay;
-
-    const fileNameSuffix = `${day}_${month}_${year}`.toUpperCase();
-    
-    return fileNameSuffix;
-  }
-
-  function calculateTotals() {
-    let totalIncome = 0;
-    document.querySelectorAll('input[name="incomeAmount"]').forEach(input => {
-      totalIncome += parseFloat(input.value) || 0;
-    });
-    
-    let totalSpends = 0;
-    document.querySelectorAll('input[name="expenseAmount"]').forEach(input => {
-      totalSpends += parseFloat(input.value) || 0;
-    });
-
-    const cashInHand = totalIncome - totalSpends;
-    
-    document.getElementById('totalIncome').textContent = formatNumberWithCommas(totalIncome);
-    document.getElementById('finalTotalIncome').textContent = formatNumberWithCommas(totalIncome);
-    document.getElementById('totalSpends').textContent = formatNumberWithCommas(totalSpends);
-    document.getElementById('finalTotalSpends').textContent = formatNumberWithCommas(totalSpends);
-    document.getElementById('cashInHand').textContent = formatNumberWithCommas(cashInHand);
-    
-    const words = numberToWords(Math.round(cashInHand));
-    document.getElementById('cashInWords').innerHTML = `<strong>${words}</strong>`;
-  }
-
-  function addRow() {
-    const tableBody = document.getElementById('incomeExpenseBody');
-    const newRow = tableBody.insertRow(-1);
-    newRow.innerHTML = `
-      <td></td>
-      <td><input type="text" name="incomeDesc"></td>
-      <td><input type="number" name="incomeAmount" oninput="calculateTotals()"></td>
-      <td></td>
-      <td><input type="text" name="expenseDesc"></td>
-      <td><input type="number" name="expenseAmount" oninput="calculateTotals()"></td>
-    `;
-    updateRowNumbers();
-    calculateTotals();
-  }
-
-  function reduceRow() {
-    const tableBody = document.getElementById('incomeExpenseBody');
-    const MIN_ROWS = 2; 
-    if (tableBody.rows.length > MIN_ROWS) { 
-        tableBody.deleteRow(tableBody.rows.length - 1);
-        updateRowNumbers();
-        calculateTotals();
-    } else {
-        alert("Cannot remove more rows. At least " + MIN_ROWS + " rows must remain.");
-    }
-  }
-
-  function updateRowNumbers() {
-    const incomeRows = document.querySelectorAll('#incomeExpenseBody tr');
-    let incomeCounter = 1;
-    let expenseCounter = 1;
-
-    incomeRows.forEach(row => {
-        row.cells[0].textContent = `${incomeCounter}.`;
-        incomeCounter++;
-
-        row.cells[3].textContent = `${expenseCounter}.`;
-        expenseCounter++;
-    });
-  }
-  
-  function formatInitialInputs() {
-      document.querySelectorAll('input[type="number"]').forEach(input => {
-          const rawValue = parseFloat(input.value);
-          if (!isNaN(rawValue)) {
-               input.value = rawValue;
-          }
-      });
-  }
-  
-  function clearImages() {
-    const previewContainer = document.getElementById('images-preview-container');
-    const placeholder = document.getElementById('no-images-placeholder');
-    const fileInput = document.getElementById('imageUpload');
-    
-    previewContainer.innerHTML = ''; 
-    placeholder.classList.remove('hidden'); 
-    fileInput.value = ''; 
-    
-    // Hide the container if no images are present
-    const imageContainer = document.getElementById('images-display-container');
-    imageContainer.classList.add('hidden');
-  }
-
-  function handleImageUpload(event) {
-    const files = event.target.files;
-    const previewContainer = document.getElementById('images-preview-container');
-    const placeholder = document.getElementById('no-images-placeholder');
-    const imageContainer = document.getElementById('images-display-container');
-
-
-    if (files.length > 0) {
-        previewContainer.innerHTML = ''; 
-        placeholder.classList.add('hidden'); 
-        imageContainer.classList.remove('hidden'); // Show container when images are loaded
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const img = document.createElement('img');
-                img.src = e.target.result; 
-                img.alt = `Attached Image ${i + 1}`;
-                img.classList.add('attached-image-thumbnail'); 
-                
-                previewContainer.appendChild(img);
-            };
-            reader.readAsDataURL(file); 
-        }
-    } else {
-        placeholder.classList.remove('hidden'); 
-        imageContainer.classList.add('hidden'); // Hide container if user removes all files
-    }
-  }
-
-
-  // --- MODIFIED PDF GENERATION LOGIC ---
-  function generateReport(includeImages) {
-    const element = document.getElementById('report-content');
-    const imageContainer = document.getElementById('images-display-container');
-    const fileNameSuffix = setDateTime(); 
-    
-    // 1. CONDITIONAL IMAGE VISIBILITY: Hide the image container if requested
-    const wasHidden = imageContainer.classList.contains('hidden'); // Check original state
-    
-    if (includeImages) {
-        imageContainer.classList.remove('hidden');
-    } else {
-        imageContainer.classList.add('hidden');
-    }
-    
-    // 2. Temporary preparation for cleaner PDF (replace inputs with text)
-    const inputs = element.querySelectorAll('input');
-    const placeholders = [];
-    
-    inputs.forEach(input => {
-      const span = document.createElement('span');
-      if (input.type === 'number') {
-           const rawValue = parseFloat(input.value);
-           span.textContent = formatNumberWithCommas(rawValue || 0);
-      } else {
-           span.textContent = input.value;
-      }
-      
-      input.parentNode.replaceChild(span, input);
-      placeholders.push({ originalElement: input, tempElement: span });
-    });
-
-    // 3. Generate the PDF
-    html2pdf(element, {
-      margin: 10,
-      filename: `Daily_Report_${fileNameSuffix}${includeImages ? '_WithImages' : '_DataOnly'}.pdf`, // Dynamic Filename
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-    }).then(() => {
-      // 4. Restore the original input fields
-      placeholders.forEach(item => {
-        item.tempElement.parentNode.replaceChild(item.originalElement, item.tempElement);
-      });
-      
-      // 5. Restore Image container visibility to its ORIGINAL state
-      if (wasHidden) {
-           imageContainer.classList.add('hidden');
-      } else {
-           imageContainer.classList.remove('hidden'); 
-      }
-      
-      // Recalculate totals and update numbers after restoring
-      calculateTotals(); 
-      updateRowNumbers();
-    });
-  }
-
-  // Initial setup on page load
-  window.onload = () => {
-    setDateTime();
-    formatInitialInputs(); 
-    calculateTotals();
-    updateRowNumbers();
-    
-    // Initial check: if no images are loaded, hide the container by default
-    const imageContainer = document.getElementById('images-display-container');
-    const hasImages = imageContainer.querySelectorAll('.attached-image-thumbnail').length > 0;
-    
-    if (!hasImages) {
-         imageContainer.classList.add('hidden');
-    }
-  };
-</script>
-
-</body>
-</html>
+  <!-- Bottom Screen-Only Image Attachment Bar (Drag & Drop + File Picker) -->
+  <div
+    id="bottomImageBar"
+    ondragover="handleDragOver(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleDrop(event)"
+    class="no-print hide-on-pdf max-w-[980px] mx-auto mt-4 bg-white border-2 border-dashed border-slate-300 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition"
+  >
+    <div class="flex items-center gap-2.5 text-center sm:text-left">
+      <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-xs font-bold text-slate-800">Receipt / Voucher Images</div>
+        <div class="text-[11px] text-slate-500">Click "Add Images" or drag &amp; drop photos here to place them 
