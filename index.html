@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Income & Expenditure Report - KILOFAR CORPORATION</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Libraries for PDF, Word (.docx), Excel (.xlsx), and PNG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <style>
+    /* Exact report typography and print-ready crisp borders */
+    body {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif;
+      background-color: #f3f4f6;
+      color: #000000;
+    }
+
+    #report-wrapper {
+      background-color: #ffffff;
+      color: #000000;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    #report-content {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 16px 20px 24px 20px;
+    }
+
+    /* Header styling matching reference image */
+    .report-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .report-header-line {
+      display: block;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.32;
+      letter-spacing: 0.2px;
+      color: #000000;
+    }
+
+    .report-header-line span,
+    .date-display-text {
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+
+    /* Account Table Styling */
+    .account-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 24px;
+      font-size: 16.5px;
+      color: #000000;
+    }
+
+    .account-table:last-child {
+      margin-bottom: 0;
+    }
+
+    .account-table th,
+    .account-table td {
+      border: 1px solid #000000;
+      padding: 4px 8px;
+      vertical-align: middle;
+      color: #000000;
+      height: 31px;
+      word-wrap: break-word;
+    }
+
+    /* Section Title Row */
+    .section-title-cell {
+      text-align: center;
+      font-size: 19px;
+      font-weight: 700;
+      padding: 6px 8px !important;
+    }
+
+    .section-title-cell span {
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+
+    /* Column Header Row */
+    .col-header-cell {
+      text-align: center;
+      font-weight: 700;
+      font-size: 16.5px;
+      padding: 5px 8px !important;
+    }
+
+    /* Specific Column Widths matching reference proportions */
+    .col-sn {
+      width: 4.5%;
+      text-align: left;
+    }
+
+    .col-desc {
+      width: 33%;
+      text-align: left;
+    }
+
+    .col-tk {
+      width: 12.5%;
+      text-align: right;
+      font-weight: 700;
+    }
+
+    /* Item row text styling */
+    .item-sn {
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .item-desc-bold {
+      font-weight: 700;
+    }
+
+    .item-desc-regular {
+      font-weight: 400;
+    }
+
+    /* Summary Rows */
+    .summary-label-left {
+      font-weight: 700;
+      text-align: left;
+      padding-left: 8px !important;
+    }
+
+    .summary-label-center-right {
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .summary-amount {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Stepped bottom-right empty cells */
+    .no-border-cell {
+      border: none !important;
+      background: transparent !important;
+    }
+
+    /* Interactive Inputs inside Table */
+    .table-input-text {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: inherit;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-text:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    .table-input-num {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: 700;
+      text-align: right;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-num:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Editable underlined date input in header */
+    .header-date-input {
+      font-family: inherit;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.32;
+      letter-spacing: 0.2px;
+      color: #000000;
+      text-align: center;
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+      border: 1px dashed transparent;
+      border-radius: 3px;
+      background: transparent;
+      outline: none;
+      width: auto;
+      min-width: 190px;
+      max-width: 100%;
+      padding: 0 4px;
+    }
+
+    .header-date-input:hover,
+    .header-date-input:focus {
+      border-color: #94a3b8;
+      background-color: #f8fafc;
+    }
+
+    /* Attached Images / Vouchers Section - Auto-Resized Uniform Grid */
+    .attached-images-section {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: center;
+      page-break-inside: auto;
+    }
+
+    .attached-images-section.hidden {
+      display: none !important;
+    }
+
+    .receipt-img-wrapper {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .attached-images-section[data-count="1"] {
+      grid-template-columns: minmax(220px, 420px);
+      justify-content: center;
+    }
+
+    .attached-images-section[data-count="1"] .receipt-img-wrapper {
+      height: 320px;
+    }
+
+    .attached-images-section[data-count="2"] {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .attached-images-section[data-count="2"] .receipt-img-wrapper {
+      height: 290px;
+    }
+
+    @media (max-width: 600px) {
+      .attached-images-section,
+      .attached-images-section[data-count="1"],
+      .attached-images-section[data-count="2"] {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .receipt-img-wrapper img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .remove-image-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background-color: rgba(15, 23, 42, 0.75);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      opacity: 0.85;
+      transition: background-color 0.15s, opacity 0.15s;
+    }
+
+    .receipt-img-wrapper:hover .remove-image-btn,
+    .remove-image-btn:focus {
+      opacity: 1;
+      background-color: rgba(225, 29, 72, 0.95);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+      .no-print,
+      .hide-on-pdf {
+        display: none !important;
+      }
+      #report-wrapper {
+        box-shadow: none !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6">
+
+  <!-- Top Controls & Export Bar (Hidden in PDF & Print) -->
+  <div class="no-print hide-on-pdf max-w-[980px] mx-auto mb-4 bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div>
+        <h1 class="text-base font-bold text-slate-800">KILOFAR CORPORATION — Daily Income &amp; Expenditure</h1>
+        <p class="text-xs text-slate-500">Click any text, date, or amount directly in the sheet to edit. Choose your preferred format below to export.</p>
+      </div>
+
+      <!-- Date Picker & Multi-Format Export Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+          <label for="reportDatePicker" class="text-xs font-semibold text-slate-600">Pick Date:</label>
+          <input
+            type="date"
+            id="reportDatePicker"
+            value="2026-11-20"
+            onchange="syncDateFromPicker()"
+            class="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+          />
+        </div>
+
+        <button
+          type="button"
+          onclick="window.print()"
+          class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+        >
+          Print
+        </button>
+
+        <!-- Unified Format Dropdown + Save Button -->
+        <div class="flex items-center bg-emerald-600 rounded-lg shadow-sm overflow-hidden">
+          <select
+            id="exportFormatSelect"
+            aria-label="Export File Format"
+            class="bg-emerald-700 text-white text-xs font-semibold px-2.5 py-2 border-r border-emerald-500 focus:outline-none cursor-pointer"
+          >
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="docx">Word (.docx)</option>
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="png">Image (.png)</option>
+            <option value="html">Web Page (.html)</option>
+          </select>
+
+          <button
+            type="button"
+            id="exportFileBtn"
+            onclick="exportReport()"
+            class="px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition cursor-pointer flex items-center gap-1.5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Save File
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Independent Left (Income) & Right (Expense) Row Controls per Account -->
+    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <!-- Section 1 Controls -->
+      <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-xs font-bold text-slate-700 mb-2">1. Multipurpose Bldg Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 Controls -->
+      <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-xs font-bold text-slate-700 mb-2">2. Rent / Cash In Hand Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('cash', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('cash', 'income')"
+              class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onclick="addSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              onclick="removeSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline Notification Banner -->
+    <div id="statusToast" class="hidden mt-3 px-3 py-2 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200"></div>
+  </div>
+
+  <!-- Printable / PDF Report Sheet -->
+  <div id="report-wrapper" class="shadow-md rounded-sm overflow-x-auto">
+    <div id="report-content">
+      <!-- Centered Underlined Header -->
+      <div class="report-header">
+        <div class="report-header-line"><span>KILOFAR CORPORATION</span></div>
+        <div class="report-header-line"><span>DAILY INCOME &amp; EXPENDITURE</span></div>
+        <div class="report-header-line">
+          <input
+            type="text"
+            id="formattedDateInput"
+            class="header-date-input"
+            data-bold="true"
+            data-align="center"
+            data-underline="true"
+            value="20 NOVEMBER 26"
+            aria-label="Report Date"
+          />
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 1: MULTIPURPOSE BLDG ACCOUNT                      -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="bldgTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="6" class="section-title-cell">
+              <span>MULTIPURPOSE BLDG ACCOUNT</span>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
+          </tr>
+        </thead>
+        <tbody id="bldgBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="bldgTotalMoney">1,05,000</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="bldgTotalSpendsRight">0</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="bldgTotalSpendsLeft">0</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+          <tr>
+            <td colspan="2" class="summary-label-left">MULTIPURPOSE BLDG ACCOUNT -</td>
+            <td class="summary-amount" id="bldgNetBalance">1,05,000</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 2: RENT / CASH IN HAND ACCOUNT                    -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="cashTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="6" class="section-title-cell">
+              <span>RENT / CASH IN HAND ACCOUNT</span>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
+          </tr>
+        </thead>
+        <tbody id="cashBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="cashTotalMoney">0</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="cashTotalSpendsRight">10,000</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL SPENDS -</td>
+            <td class="summary-amount" id="cashTotalSpendsLeft">10,000</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+          <tr>
+            <td colspan="2" class="summary-label-left">CASH IN HAND ACCOUNT -</td>
+            <td class="summary-amount" id="cashNetBalance">25,241</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- ========================================================= -->
+      <!-- ATTACHED RECEIPT IMAGES (Auto-resized uniform layout)      -->
+      <!-- ========================================================= -->
+      <div id="attachedImagesSection" class="attached-images-section hidden" data-count="0"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Screen-Only Image Attachment Bar -->
+  <div
+    id="bottomImageBar"
+    ondragover="handleDragOver(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleDrop(event)"
+    class="no-print hide-on-pdf max-w-[980px] mx-auto mt-4 bg-white border-2 border-dashed border-slate-300 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition"
+  >
+    <div class="flex items-center gap-2.5 text-center sm:text-left">
+      <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-xs font-bold text-slate-800">Receipt / Voucher Images</div>
+        <div class="text-[11px] text-slate-500">Click "Add Images" or drag &amp; drop photos here to auto-resize and place them below the report tables.</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <input
+        type="file"
+        id="imageUploadInput"
+        accept="image/*"
+        multiple
+        class="hidden"
+        onchange="handleImageSelection(event)"
+      />
+
+      <button
+        type="button"
+        onclick="document.getElementById('imageUploadInput').click()"
+        class="px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1.5"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Images
+      </button>
+
+      <button
+        type="button"
+        id="clearImagesBtn"
+        onclick="clearAllImages()"
+        class="hidden px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition cursor-pointer"
+      >
+        Clear All Images (<span id="imageCountBadge">0</span>)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const MONTHS_UPPER = [
+      "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+      "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+    ];
+
+    const accountData = {
+      bldg: {
+        income: [
+          { desc: "Previous Balance -", amount: "0", bold: true }
+        ],
+        expense: [
+          { desc: "", amount: "", bold: false }
+        ]
+      },
+      cash: {
+        income: [
+          { desc: "Previous Balance -", amount: "0", bold: true }
+        ],
+        expense: [
+          { desc: "", amount: "0", bold: false }
+        ]
+      }
+    };
+
+    let attachedImages = [];
+
+    function formatSouthAsianNumber(value) {
+      const num = Math.round(Number(value) || 0);
+      return num.toLocaleString("en-IN");
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+      const toast = document.getElementById("statusToast");
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3500);
+    }
+
+    function syncDateFromPicker() {
+      const picker = document.getElementById("reportDatePicker");
+      const textInput = document.getElementById("formattedDateInput");
+      if (!picker || !picker.value) return;
+
+      const [y, m, d] = picker.value.split("-").map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      const monthName = MONTHS_UPPER[dateObj.getMonth()];
+      const shortYear = String(dateObj.getFullYear()).slice(-2);
+
+      textInput.value = `${day} ${monthName} ${shortYear}`;
+    }
+
+    function getDateFilenameSuffix() {
+      const textInput = document.getElementById("formattedDateInput");
+      const raw = (textInput && textInput.value.trim()) || "REPORT";
+      return raw.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "").toUpperCase();
+    }
+
+    function renderSectionBody(sectionKey) {
+      const tbody = document.getElementById(sectionKey === "bldg" ? "bldgBody" : "cashBody");
+      const incomeList = accountData[sectionKey].income;
+      const expenseList = accountData[sectionKey].expense;
+      const maxRows = Math.max(incomeList.length, expenseList.length, 1);
+
+      let rowsHtml = "";
+
+      for (let i = 0; i < maxRows; i++) {
+        const inc = incomeList[i];
+        const exp = expenseList[i];
+
+        const leftCells = inc
+          ? `
+            <td class="item-sn">${i + 1}.</td>
+            <td>
+              <input
+                type="text"
+                class="table-input-text ${inc.bold ? "item-desc-bold" : "item-desc-regular"}"
+                data-bold="${inc.bold ? "true" : "false"}"
+                value="${escapeHtmlAttr(inc.desc)}"
+                oninput="updateItemField('${sectionKey}', 'income', ${i}, 'desc', this.value)"
+              />
+            </td>
+            <td class="col-tk">
+              <input
+                type="number"
+                class="table-input-num"
+                value="${escapeHtmlAttr(inc.amount)}"
+                oninput="updateItemField('${sectionKey}', 'income', ${i}, 'amount', this.value)"
+              />
+            </td>
+          `
+          : `
+            <td class="item-sn"></td>
+            <td></td>
+            <td class="col-tk"></td>
+          `;
+
+        const rightCells = exp
+          ? `
+            <td class="item-sn">${i + 1}.</td>
+            <td>
+              <input
+                type="text"
+                class="table-input-text ${exp.bold ? "item-desc-bold" : "item-desc-regular"}"
+                data-bold="${exp.bold ? "true" : "false"}"
+                value="${escapeHtmlAttr(exp.desc)}"
+                oninput="updateItemField('${sectionKey}', 'expense', ${i}, 'desc', this.value)"
+              />
+            </td>
+            <td class="col-tk">
+              <input
+                type="number"
+                class="table-input-num"
+                value="${escapeHtmlAttr(exp.amount)}"
+                oninput="updateItemField('${sectionKey}', 'expense', ${i}, 'amount', this.value)"
+              />
+            </td>
+          `
+          : `
+            <td class="item-sn"></td>
+            <td></td>
+            <td class="col-tk"></td>
+          `;
+
+        rowsHtml += `<tr>${leftCells}${rightCells}</tr>`;
+      }
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function updateItemField(sectionKey, side, index, field, value) {
+      if (accountData[sectionKey] && accountData[sectionKey][side][index]) {
+        accountData[sectionKey][side][index][field] = value;
+        recalculateAll();
+      }
+    }
+
+    function addSideItem(sectionKey, side) {
+      accountData[sectionKey][side].push({
+        desc: "",
+        amount: "",
+        bold: false
+      });
+      renderSectionBody(sectionKey);
+      recalculateAll();
+    }
+
+    function removeSideItem(sectionKey, side) {
+      const list = accountData[sectionKey][side];
+      if (list.length > 1) {
+        list.pop();
+        renderSectionBody(sectionKey);
+        recalculateAll();
+      } else {
+        showToast(`At least 1 ${side === "income" ? "balance/income" : "expense"} row must remain.`);
+      }
+    }
+
+    function getSectionTotals(sectionKey) {
+      const totalMoney = accountData[sectionKey].income.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      );
+      const totalSpends = accountData[sectionKey].expense.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      );
+      return {
+        totalMoney,
+        totalSpends,
+        netBalance: totalMoney - totalSpends
+      };
+    }
+
+    function recalculateAll() {
+      calculateSectionTotals("bldg", {
+        moneyEl: "bldgTotalMoney",
+        spendsRightEl: "bldgTotalSpendsRight",
+        spendsLeftEl: "bldgTotalSpendsLeft",
+        netEl: "bldgNetBalance"
+      });
+
+      calculateSectionTotals("cash", {
+        moneyEl: "cashTotalMoney",
+        spendsRightEl: "cashTotalSpendsRight",
+        spendsLeftEl: "cashTotalSpendsLeft",
+        netEl: "cashNetBalance"
+      });
+    }
+
+    function calculateSectionTotals(sectionKey, ids) {
+      const { totalMoney, totalSpends, netBalance } = getSectionTotals(sectionKey);
+      document.getElementById(ids.moneyEl).textContent = formatSouthAsianNumber(totalMoney);
+      document.getElementById(ids.spendsRightEl).textContent = formatSouthAsianNumber(totalSpends);
+      document.getElementById(ids.spendsLeftEl).textContent = formatSouthAsianNumber(totalSpends);
+      document.getElementById(ids.netEl).textContent = formatSouthAsianNumber(netBalance);
+    }
+
+    /* ===================================================================== */
+    /* IMAGE ATTACHMENT & AUTO-RESIZING                                      */
+    /* ===================================================================== */
+    function handleImageSelection(event) {
+      const files = Array.from(event.target.files || []);
+      processImageFiles(files);
+      event.target.value = "";
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.add("border-indigo-500", "bg-indigo-50/40");
+    }
+
+    function handleDragLeave(event) {
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.remove("border-indigo-500", "bg-indigo-50/40");
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.remove("border-indigo-500", "bg-indigo-50/40");
+      const files = Array.from(event.dataTransfer?.files || []);
+      processImageFiles(files);
+    }
+
+    function resizeImageFile(file, maxDimension = 1200, quality = 0.88) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            resolve({
+              src: canvas.toDataURL("image/jpeg", quality),
+              width,
+              height
+            });
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function processImageFiles(files) {
+      if (!files.length) return;
+      const validImages = files.filter((f) => f.type.startsWith("image/"));
+
+      if (validImages.length < files.length) {
+        showToast("Skipped non-image file(s). Only image files can be attached.");
+      }
+      if (!validImages.length) return;
+
+      for (let i = 0; i < validImages.length; i++) {
+        const resized = await resizeImageFile(validImages[i]);
+        attachedImages.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${i}`,
+          src: resized.src,
+          width: resized.width,
+          height: resized.height
+        });
+      }
+
+      renderAttachedImages();
+    }
+
+    function removeAttachedImage(id) {
+      attachedImages = attachedImages.filter((img) => img.id !== id);
+      renderAttachedImages();
+    }
+
+    function clearAllImages() {
+      attachedImages = [];
+      renderAttachedImages();
+      showToast("All attached images cleared.");
+    }
+
+    function renderAttachedImages() {
+      const section = document.getElementById("attachedImagesSection");
+      const clearBtn = document.getElementById("clearImagesBtn");
+      const countBadge = document.getElementById("imageCountBadge");
+
+      section.setAttribute("data-count", String(attachedImages.length));
+
+      if (attachedImages.length === 0) {
+        section.classList.add("hidden");
+        clearBtn.classList.add("hidden");
+        section.innerHTML = "";
+        countBadge.textContent = "0";
+        return;
+      }
+
+      section.classList.remove("hidden");
+      clearBtn.classList.remove("hidden");
+      countBadge.textContent = String(attachedImages.length);
+
+      section.innerHTML = attachedImages
+        .map(
+          (img, index) => `
+          <div class="receipt-img-wrapper">
+            <button
+              type="button"
+              class="remove-image-btn no-print hide-on-pdf"
+              title="Remove image"
+              onclick="removeAttachedImage('${img.id}')"
+            >&times;</button>
+            <img src="${img.src}" alt="Receipt ${index + 1}" />
+          </div>
+        `
+        )
+        .join("");
+    }
+
+    function escapeHtmlAttr(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    /* ===================================================================== */
+    /* MULTI-FORMAT EXPORT ENGINE (PDF, DOCX, XLSX, PNG, HTML)               */
+    /* ===================================================================== */
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    /**
+     * Temporarily replaces <input> elements inside #report-content with static text
+     * for clean visual capture (used by PDF, PNG, and standalone HTML exports).
+     */
+    function prepareStaticReportSnapshot() {
+      const reportEl = document.getElementById("report-content");
+      const hiddenControls = reportEl.querySelectorAll(".hide-on-pdf");
+      hiddenControls.forEach((el) => {
+        el.style.display = "none";
+      });
+
+      const inputs = reportEl.querySelectorAll("input");
+      const replacements = [];
+
+      inputs.forEach((input) => {
+        const span = document.createElement("span");
+        span.style.display = input.dataset.underline === "true" ? "inline-block" : "block";
+        if (input.dataset.underline !== "true") {
+          span.style.width = "100%";
+        }
+
+        if (input.type === "number") {
+          const rawVal = input.value.trim();
+          span.style.textAlign = "right";
+          span.style.fontWeight = "700";
+          span.textContent = rawVal === "" ? "" : formatSouthAsianNumber(parseFloat(rawVal));
+        } else {
+          span.style.textAlign = input.dataset.align || "left";
+          span.style.fontWeight = input.dataset.bold === "true" ? "700" : "400";
+          if (input.dataset.underline === "true") {
+            span.style.textDecoration = "underline";
+            span.style.textDecorationThickness = "1.5px";
+            span.style.textUnderlineOffset = "3px";
+          }
+          span.textContent = input.value;
+        }
+
+        input.parentNode.replaceChild(span, input);
+        replacements.push({ original: input, temp: span });
+      });
+
+      return () => {
+        replacements.forEach(({ original, temp }) => {
+          temp.parentNode.replaceChild(original, temp);
+        });
+        hiddenControls.forEach((el) => {
+          el.style.display = "";
+        });
+      };
+    }
+
+    async function exportReport() {
+      const format = document.getElementById("exportFormatSelect").value;
+      const btn = document.getElementById("exportFileBtn");
+      const suffix = getDateFilenameSuffix();
+      const baseFilename = `KILOFAR_Daily_Report_${suffix}`;
+
+      btn.disabled = true;
+      btn.classList.add("opacity-70");
+
+      try {
+        if (format === "pdf") {
+          await exportAsPDF(baseFilename);
+        } else if (format === "docx") {
+          await exportAsDOCX(baseFilename);
+        } else if (format === "xlsx") {
+          exportAsXLSX(baseFilename);
+        } else if (format === "png") {
+          await exportAsPNG(baseFilename);
+        } else if (format === "html") {
+          exportAsHTML(baseFilename);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Export failed. Please check your internet connection or try Print -> Save as PDF.");
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove("opacity-70");
+      }
+    }
+
+    /* 1. PDF EXPORT */
+    function exportAsPDF(baseFilename) {
+      return new Promise((resolve, reject) => {
+        const reportEl = document.getElementById("report-content");
+        const restoreUI = prepareStaticReportSnapshot();
+
+        const options = {
+          margin: [8, 8, 8, 8],
+          filename: `${baseFilename}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            backgroundColor: "#ffffff"
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait"
+          }
+        };
+
+        html2pdf()
+          .set(options)
+          .from(reportEl)
+          .save()
+          .then(() => {
+            restoreUI();
+            resolve();
+          })
+          .catch((err) => {
+            restoreUI();
+            reject(err);
+          });
+      });
+    }
+
+    /* 2. WORD (.DOCX) EXPORT */
+    async function exportAsDOCX(baseFilename) {
+      if (!window.docx) {
+        throw new Error("DOCX library not loaded");
+      }
+
+      const {
+        Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+        WidthType, AlignmentType, BorderStyle, ImageRun, UnderlineType
+      } = window.docx;
+
+      const reportDate = document.getElementById("formattedDateInput").value.trim() || "REPORT";
+
+      const solidBorder = { style: BorderStyle.SINGLE, size: 6, color: "000000" };
+      const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+
+      const fullCellBorders = {
+        top: solidBorder,
+        bottom: solidBorder,
+        left: solidBorder,
+        right: solidBorder
+      };
+
+      const stepCellBorders = {
+        top: solidBorder,
+        bottom: noBorder,
+        left: solidBorder,
+        right: noBorder
+      };
+
+      function makeParagraph(text, opts = {}) {
+        return new Paragraph({
+          alignment: opts.align || AlignmentType.LEFT,
+          spacing: { before: 40, after: 40 },
+          children: [
+            new TextRun({
+              text: String(text || ""),
+              bold: Boolean(opts.bold),
+              size: opts.size || 22,
+              font: "Calibri",
+              underline: opts.underline ? { type: UnderlineType.SINGLE } : undefined
+            })
+          ]
+        });
+      }
+
+      function buildAccountDocxTable(title, sectionKey, netLabel) {
+        const incomeList = accountData[sectionKey].income;
+        const expenseList = accountData[sectionKey].expense;
+        const maxRows = Math.max(incomeList.length, expenseList.length, 1);
+        const totals = getSectionTotals(sectionKey);
+
+        // Column widths in DXA (approx 9600 total width for A4 portrait)
+        const colWidths = [550, 3050, 1200, 550, 3050, 1200];
+
+        const rows = [
+          // Section Title Row
+          new TableRow({
+            children: [
+              new TableCell({
+                columnSpan: 6,
+                borders: fullCellBorders,
+                children: [makeParagraph(title, { align: AlignmentType.CENTER, bold: true, underline: true, size: 24 })]
+              })
+            ]
+          }),
+          // Column Header Row
+          new TableRow({
+            children: [
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph("BALANCE FROM", { align: AlignmentType.CENTER, bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph("TK", { align: AlignmentType.CENTER, bold: true })] }),
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph("EXPENSE DETAILS", { align: AlignmentType.CENTER, bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph("TK", { align: AlignmentType.CENTER, bold: true })] })
+            ]
+          })
+        ];
+
+        for (let i = 0; i < maxRows; i++) {
+          const inc = incomeList[i];
+          const exp = expenseList[i];
+
+          const incAmt = inc && inc.amount !== "" ? formatSouthAsianNumber(parseFloat(inc.amount)) : "";
+          const expAmt = exp && exp.amount !== "" ? formatSouthAsianNumber(parseFloat(exp.amount)) : "";
+
+          rows.push(
+            new TableRow({
+              children: [
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(inc ? `${i + 1}.` : "")] }),
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(inc ? inc.desc : "", { bold: inc?.bold })] }),
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(incAmt, { align: AlignmentType.RIGHT, bold: true })] }),
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(exp ? `${i + 1}.` : "")] }),
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(exp ? exp.desc : "", { bold: exp?.bold })] }),
+                new TableCell({ borders: fullCellBorders, children: [makeParagraph(expAmt, { align: AlignmentType.RIGHT, bold: true })] })
+              ]
+            })
+          );
+        }
+
+        // Summary Row A
+        rows.push(
+          new TableRow({
+            children: [
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph("TOTAL MONEY -", { bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph(formatSouthAsianNumber(totals.totalMoney), { align: AlignmentType.RIGHT, bold: true })] }),
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph("TOTAL SPENDS -", { align: AlignmentType.CENTER, bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph(formatSouthAsianNumber(totals.totalSpends), { align: AlignmentType.RIGHT, bold: true })] })
+            ]
+          })
+        );
+
+        // Summary Row B
+        rows.push(
+          new TableRow({
+            children: [
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph("TOTAL SPENDS -", { bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph(formatSouthAsianNumber(totals.totalSpends), { align: AlignmentType.RIGHT, bold: true })] }),
+              new TableCell({ columnSpan: 3, borders: stepCellBorders, children: [makeParagraph("")] })
+            ]
+          })
+        );
+
+        // Summary Row C
+        rows.push(
+          new TableRow({
+            children: [
+              new TableCell({ columnSpan: 2, borders: fullCellBorders, children: [makeParagraph(netLabel, { bold: true })] }),
+              new TableCell({ borders: fullCellBorders, children: [makeParagraph(formatSouthAsianNumber(totals.netBalance), { align: AlignmentType.RIGHT, bold: true })] }),
+              new TableCell({ columnSpan: 3, borders: { top: noBorder, bottom: noBorder, left: solidBorder, right: noBorder }, children: [makeParagraph("")] })
+            ]
+          })
+        );
+
+        return new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          columnWidths: colWidths,
+          rows
+        });
+      }
+
+      const children = [
+        makeParagraph("KILOFAR CORPORATION", { align: AlignmentType.CENTER, bold: true, underline: true, size: 28 }),
+        makeParagraph("DAILY INCOME & EXPENDITURE", { align: AlignmentType.CENTER, bold: true, underline: true, size: 28 }),
+        makeParagraph(reportDate, { align: AlignmentType.CENTER, bold: true, underline: true, size: 28 }),
+        new Paragraph({ spacing: { after: 160 } }),
+        buildAccountDocxTable("MULTIPURPOSE BLDG ACCOUNT", "bldg", "MULTIPURPOSE BLDG ACCOUNT -"),
+        new Paragraph({ spacing: { after: 240 } }),
+        buildAccountDocxTable("RENT / CASH IN HAND ACCOUNT", "cash", "CASH IN HAND ACCOUNT -")
+      ];
+
+      // Embed auto-resized receipt images into Word document
+      if (attachedImages.length > 0) {
+        children.push(new Paragraph({ spacing: { before: 240 } }));
+        const imageRuns = [];
+
+        for (const imgObj of attachedImages) {
+          const response = await fetch(imgObj.src);
+          const buffer = await response.arrayBuffer();
+
+          // Fit each image proportionally within 210x240px for Word layout
+          const maxW = attachedImages.length === 1 ? 340 : 210;
+          const maxH = 240;
+          const ratio = Math.min(maxW / (imgObj.width || 600), maxH / (imgObj.height || 600));
+          const finalW = Math.round((imgObj.width || 600) * ratio);
+          const finalH = Math.round((imgObj.height || 600) * ratio);
+
+          imageRuns.push(
+            new ImageRun({
+              data: buffer,
+              transformation: { width: finalW, height: finalH }
+            }),
+            new TextRun({ text: "   " })
+          );
+        }
+
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: imageRuns
+          })
+        );
+      }
+
+      const doc = new Document({
+        sections: [{
+          properties: {
+            page: {
+              margin: { top: 720, right: 720, bottom: 720, left: 720 }
+            }
+          },
+          children
+        }]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      triggerDownload(blob, `${baseFilename}.docx`);
+    }
+
+    /* 3. EXCEL (.XLSX) EXPORT */
+    function exportAsXLSX(baseFilename) {
+      if (!window.XLSX) {
+        throw new Error("XLSX library not loaded");
+      }
+
+      const reportDate = document.getElementById("formattedDateInput").value.trim() || "REPORT";
+      const wsData = [
+        ["KILOFAR CORPORATION"],
+        ["DAILY INCOME & EXPENDITURE"],
+        [reportDate],
+        []
+      ];
+
+      function appendAccountToSheet(title, sectionKey, netLabel) {
+        const incomeList = accountData[sectionKey].income;
+        const expenseList = accountData[sectionKey].expense;
+        const maxRows = Math.max(incomeList.length, expenseList.length, 1);
+        const totals = getSectionTotals(sectionKey);
+
+        wsData.push([title]);
+        wsData.push(["S/N", "BALANCE FROM", "TK", "S/N", "EXPENSE DETAILS", "TK"]);
+
+        for (let i = 0; i < maxRows; i++) {
+          const inc = incomeList[i];
+          const exp = expenseList[i];
+          wsData.push([
+            inc ? i + 1 : "",
+            inc ? inc.desc : "",
+            inc && inc.amount !== "" ? Number(inc.amount) : "",
+            exp ? i + 1 : "",
+            exp ? exp.desc : "",
+            exp && exp.amount !== "" ? Number(exp.amount) : ""
+          ]);
+        }
+
+        wsData.push(["", "TOTAL MONEY -", totals.totalMoney, "", "TOTAL SPENDS -", totals.totalSpends]);
+        wsData.push(["", "TOTAL SPENDS -", totals.totalSpends, "", "", ""]);
+        wsData.push(["", netLabel, totals.netBalance, "", "", ""]);
+        wsData.push([]);
+      }
+
+      appendAccountToSheet("MULTIPURPOSE BLDG ACCOUNT", "bldg", "MULTIPURPOSE BLDG ACCOUNT -");
+      appendAccountToSheet("RENT / CASH IN HAND ACCOUNT", "cash", "CASH IN HAND ACCOUNT -");
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws["!cols"] = [
+        { wch: 6 },
+        { wch: 36 },
+        { wch: 15 },
+        { wch: 6 },
+        { wch: 36 },
+        { wch: 15 }
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Daily Report");
+      XLSX.writeFile(wb, `${baseFilename}.xlsx`);
+    }
+
+    /* 4. IMAGE (.PNG) EXPORT */
+    async function exportAsPNG(baseFilename) {
+      if (!window.html2canvas) {
+        throw new Error("html2canvas library not loaded");
+      }
+
+      const reportEl = document.getElementById("report-content");
+      const restoreUI = prepareStaticReportSnapshot();
+
+      try {
+        const canvas = await html2canvas(reportEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff"
+        });
+
+        await new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            triggerDownload(blob, `${baseFilename}.png`);
+            resolve();
+          }, "image/png");
+        });
+      } finally {
+        restoreUI();
+      }
+    }
+
+    /* 5. STANDALONE SNAPSHOT (.HTML) EXPORT */
+    function exportAsHTML(baseFilename) {
+      const reportEl = document.getElementById("report-content");
+      const styles = document.querySelector("style").innerHTML;
+      const restoreUI = prepareStaticReportSnapshot();
+      const reportHtml = reportEl.outerHTML;
+      restoreUI();
+
+      const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${baseFilename}</title>
+  <style>${styles}</style>
+</head>
+<body style="background:#ffffff; padding:16px;">
+  <div id="report-wrapper">${reportHtml}</div>
+</body>
+</html>`;
+
+      const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+      triggerDownload(blob, `${baseFilename}.html`);
+    }
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      renderSectionBody("bldg");
+      renderSectionBody("cash");
+      recalculateAll();
+    });
+  </script>
+</body>
+</html>
