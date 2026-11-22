@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Income & Expenditure Report - KILOFAR CORPORATION</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    /* Exact report typography and print-ready crisp borders */
+    body {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif;
+      background-color: #f3f4f6;
+      color: #000000;
+    }
+
+    #report-wrapper {
+      background-color: #ffffff;
+      color: #000000;
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    #report-content {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 14px 16px 20px 16px;
+    }
+
+    /* Header styling with tight spacing between the 3 heading lines */
+    .report-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .header-line-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 0;
+    }
+
+    .header-text-box {
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .report-header-line {
+      display: block;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: 0.2px;
+      color: #000000;
+    }
+
+    .ul-bar,
+    .section-ul-bar {
+      display: none !important;
+    }
+
+    /* Account Table Styling - Slimmer rows & columns with centered vertical alignment */
+    .account-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 16px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #000000;
+    }
+
+    .account-table.hidden-account {
+      display: none !important;
+    }
+
+    .account-table:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .account-table th,
+    .account-table td {
+      border: 1px solid #000000;
+      padding: 4px 6px;
+      vertical-align: middle;
+      color: #000000;
+      height: 30px;
+      line-height: 1.15;
+      font-weight: 700;
+      word-wrap: break-word;
+    }
+
+    /* Section Title Row */
+    .section-title-cell {
+      text-align: center;
+      font-size: 17.5px;
+      font-weight: 700;
+      height: 34px !important;
+      padding: 4px 6px !important;
+    }
+
+    .section-title-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      width: fit-content;
+    }
+
+    /* Column Header Row */
+    .col-header-cell {
+      text-align: center;
+      font-weight: 700;
+      font-size: 14.5px;
+      padding: 4px 6px !important;
+    }
+
+    /* Narrower, well-proportioned column widths */
+    .col-sn {
+      width: 5%;
+      text-align: center;
+    }
+
+    .col-desc {
+      width: 31%;
+      text-align: left;
+    }
+
+    .col-tk {
+      width: 14%;
+      text-align: right;
+      font-weight: 700;
+    }
+
+    /* Item row text styling */
+    .item-sn {
+      font-size: 14.5px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .item-desc-bold,
+    .item-desc-regular {
+      font-size: 14.5px;
+      font-weight: 700;
+    }
+
+    /* Summary Rows */
+    .summary-label-left {
+      font-size: 14.5px;
+      font-weight: 700;
+      text-align: left;
+      padding-left: 6px !important;
+    }
+
+    .summary-label-center-right {
+      font-size: 14.5px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .summary-amount {
+      font-size: 14.5px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Stepped bottom-right empty cells (no borders on right half for rows B & C) */
+    .no-border-cell {
+      border: none !important;
+      background: transparent !important;
+    }
+
+    /* Interactive Inputs inside Table */
+    .table-input-text {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-text:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    .table-input-num {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      line-height: 1.15;
+      text-align: right;
+      color: #000000;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .table-input-num:focus {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    /* Locked / Read-Only Mode Styling */
+    body.report-locked .table-input-text,
+    body.report-locked .table-input-num {
+      border-color: transparent !important;
+      background-color: transparent !important;
+      cursor: default;
+    }
+
+    body.report-locked .header-date-input {
+      border-color: transparent !important;
+      background-color: transparent !important;
+      cursor: default;
+    }
+
+    /* Remove number input spinners for cleaner look */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Editable date input in header */
+    .header-date-input {
+      display: block;
+      font-family: inherit;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: 0.2px;
+      color: #000000;
+      text-align: center;
+      text-decoration: none !important;
+      border: 1px dashed transparent;
+      border-radius: 3px;
+      background: transparent;
+      outline: none;
+      width: auto;
+      min-width: 160px;
+      max-width: 100%;
+      padding: 0 4px;
+    }
+
+    .header-date-input:hover,
+    .header-date-input:focus {
+      border-color: #94a3b8;
+      background-color: #f8fafc;
+    }
+
+    /* Attached Images / Vouchers Section - Auto-Resized Uniform Grid */
+    .attached-images-section {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: center;
+      page-break-inside: auto;
+    }
+
+    .attached-images-section.hidden {
+      display: none !important;
+    }
+
+    .receipt-img-wrapper {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .attached-images-section[data-count="1"] {
+      grid-template-columns: minmax(220px, 420px);
+      justify-content: center;
+    }
+
+    .attached-images-section[data-count="1"] .receipt-img-wrapper {
+      height: 320px;
+    }
+
+    .attached-images-section[data-count="2"] {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .attached-images-section[data-count="2"] .receipt-img-wrapper {
+      height: 290px;
+    }
+
+    @media (max-width: 600px) {
+      .attached-images-section,
+      .attached-images-section[data-count="1"],
+      .attached-images-section[data-count="2"] {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .receipt-img-wrapper img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .remove-image-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background-color: rgba(15, 23, 42, 0.75);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      opacity: 0.85;
+      transition: background-color 0.15s, opacity 0.15s;
+    }
+
+    .receipt-img-wrapper:hover .remove-image-btn,
+    .remove-image-btn:focus {
+      opacity: 1;
+      background-color: rgba(225, 29, 72, 0.95);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+      .no-print,
+      .hide-on-pdf {
+        display: none !important;
+      }
+      #report-wrapper {
+        box-shadow: none !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 text-[14px]">
+
+  <!-- Top Controls & Independent Row Management (Hidden in PDF & Print) -->
+  <div class="no-print hide-on-pdf max-w-[820px] mx-auto mb-4 bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div>
+        <h1 class="text-[14px] font-bold text-slate-800">KILOFAR CORPORATION — Daily Income &amp; Expenditure</h1>
+        <p class="text-[14px] text-slate-500">Toggle account visibility or lock/unlock editing anytime. Export in PDF, JPG, or Microsoft Word.</p>
+      </div>
+
+      <!-- Date Picker, Edit Lock & Export Dropdown -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+          <label for="reportDatePicker" class="text-[14px] font-semibold text-slate-600">Pick Date:</label>
+          <input
+            type="date"
+            id="reportDatePicker"
+            value="2026-11-20"
+            onchange="syncDateFromPicker()"
+            class="text-[14px] font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+          />
+        </div>
+
+        <button
+          type="button"
+          id="editModeToggleBtn"
+          onclick="toggleEditMode()"
+          class="px-3 py-2 text-[14px] font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg transition cursor-pointer"
+        >
+          Editable: ON (Click to Lock)
+        </button>
+
+        <button
+          type="button"
+          onclick="window.print()"
+          class="px-3 py-2 text-[14px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+        >
+          Print Sheet
+        </button>
+
+        <!-- Download Report Dropdown (PDF, JPG, Microsoft Word only) -->
+        <div class="relative inline-block text-left" id="downloadDropdownContainer">
+          <button
+            type="button"
+            id="downloadDropdownBtn"
+            onclick="toggleDownloadMenu(event)"
+            aria-haspopup="true"
+            aria-expanded="false"
+            class="px-4 py-2 text-[14px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1.5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span id="downloadBtnLabel">Download Report</span>
+            <svg xmlns="http://www.w3.org/2000/svg" id="downloadChevron" class="w-4 h-4 ml-0.5 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div
+            id="downloadDropdownMenu"
+            role="menu"
+            class="hidden absolute right-0 mt-2 w-64 origin-top-right bg-white border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 py-1.5 z-50"
+          >
+            <div class="px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              Select Export Format
+            </div>
+
+            <!-- 1. PDF -->
+            <button
+              type="button"
+              role="menuitem"
+              onclick="handleExport('pdf')"
+              class="w-full px-3.5 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer"
+            >
+              <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 font-bold text-[11px] flex items-center justify-center shrink-0 border border-rose-100">PDF</span>
+              <div>
+                <div class="text-[14px] font-semibold text-slate-800 leading-tight">PDF (.pdf)</div>
+                <div class="text-[12px] text-slate-500">Print-ready A4 report sheet</div>
+              </div>
+            </button>
+
+            <!-- 2. JPG -->
+            <button
+              type="button"
+              role="menuitem"
+              onclick="handleExport('jpg')"
+              class="w-full px-3.5 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer"
+            >
+              <span class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 font-bold text-[11px] flex items-center justify-center shrink-0 border border-sky-100">JPG</span>
+              <div>
+                <div class="text-[14px] font-semibold text-slate-800 leading-tight">JPG (.jpg)</div>
+                <div class="text-[12px] text-slate-500">High-resolution JPEG image</div>
+              </div>
+            </button>
+
+            <!-- 3. Microsoft Word -->
+            <button
+              type="button"
+              role="menuitem"
+              onclick="handleExport('doc')"
+              class="w-full px-3.5 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer"
+            >
+              <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[11px] flex items-center justify-center shrink-0 border border-indigo-100">WORD</span>
+              <div>
+                <div class="text-[14px] font-semibold text-slate-800 leading-tight">Microsoft Word (.doc)</div>
+                <div class="text-[12px] text-slate-500">Editable Word document</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Visibility Toggles -->
+    <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+      <div class="text-[14px] font-bold text-slate-700">Account Visibility:</div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          id="toggleBldgBtn"
+          onclick="toggleAccountVisibility('bldg')"
+          class="px-3 py-1 text-[14px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition cursor-pointer"
+        >
+          Hide Multipurpose Bldg Account
+        </button>
+        <button
+          type="button"
+          id="toggleCashBtn"
+          onclick="toggleAccountVisibility('cash')"
+          class="px-3 py-1 text-[14px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition cursor-pointer"
+        >
+          Hide Rent / Cash In Hand Account
+        </button>
+      </div>
+    </div>
+
+    <!-- Independent Left (Income) & Right (Expense) Row Controls per Account -->
+    <div id="rowControlsGrid" class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <!-- Section 1 Controls -->
+      <div id="bldgControlsBox" class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-[14px] font-bold text-slate-700 mb-2">1. Multipurpose Bldg Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="addSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[14px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="removeSideItem('bldg', 'income')"
+              class="px-2 py-1 text-[14px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="addSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[14px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="removeSideItem('bldg', 'expense')"
+              class="px-2 py-1 text-[14px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 Controls -->
+      <div id="cashControlsBox" class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80">
+        <div class="text-[14px] font-bold text-slate-700 mb-2">2. Rent / Cash In Hand Account Rows</div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="addSideItem('cash', 'income')"
+              class="px-2 py-1 text-[14px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition cursor-pointer"
+            >
+              + Income Row
+            </button>
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="removeSideItem('cash', 'income')"
+              class="px-2 py-1 text-[14px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition cursor-pointer"
+            >
+              - Income
+            </button>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="addSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[14px] font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition cursor-pointer"
+            >
+              + Expense Row
+            </button>
+            <button
+              type="button"
+              data-edit-control="true"
+              onclick="removeSideItem('cash', 'expense')"
+              class="px-2 py-1 text-[14px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded transition cursor-pointer"
+            >
+              - Expense
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline Notification Banner -->
+    <div id="statusToast" class="hidden mt-3 px-3 py-2 rounded-lg text-[14px] font-medium bg-amber-50 text-amber-800 border border-amber-200"></div>
+  </div>
+
+  <!-- Printable / PDF Report Sheet -->
+  <div id="report-wrapper" class="shadow-md rounded-sm overflow-x-auto">
+    <div id="report-content">
+      <!-- Centered Header with Compact Close Lines & No Underlines -->
+      <div class="report-header">
+        <div class="header-line-wrap">
+          <div class="header-text-box">
+            <span class="report-header-line">KILOFAR CORPORATION</span>
+          </div>
+        </div>
+        <div class="header-line-wrap">
+          <div class="header-text-box">
+            <span class="report-header-line">DAILY INCOME &amp; EXPENDITURE</span>
+          </div>
+        </div>
+        <div class="header-line-wrap">
+          <div class="header-text-box">
+            <input
+              type="text"
+              id="formattedDateInput"
+              class="header-date-input"
+              data-bold="true"
+              data-align="center"
+              data-date-line="true"
+              value="NOVEMBER 26"
+              aria-label="Report Date"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 1: MULTIPURPOSE BLDG ACCOUNT                      -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="bldgTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="6" class="section-title-cell">
+              <div class="section-title-wrap">
+                <span>MULTIPURPOSE BLDG ACCOUNT</span>
+              </div>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
+          </tr>
+        </thead>
+        <tbody id="bldgBody"></tbody>
+        <tfoot>
+          <!-- Row A: TOTAL MONEY & TOTAL EXPENSE -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="bldgTotalMoney">0</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL EXPENSE -</td>
+            <td class="summary-amount" id="bldgTotalSpendsRight">0</td>
+          </tr>
+          <!-- Row B: TOTAL EXPENSE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL EXPENSE -</td>
+            <td class="summary-amount" id="bldgTotalSpendsLeft">0</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+          <!-- Row C: MULTIPURPOSE BLDG ACCOUNT BALANCE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">MULTIPURPOSE BLDG ACCOUNT -</td>
+            <td class="summary-amount" id="bldgNetBalance">0</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- ========================================================= -->
+      <!-- SECTION 2: RENT / CASH IN HAND ACCOUNT                    -->
+      <!-- ========================================================= -->
+      <table class="account-table" id="cashTable">
+        <colgroup>
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+          <col class="col-sn" />
+          <col class="col-desc" />
+          <col class="col-tk" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="6" class="section-title-cell">
+              <div class="section-title-wrap">
+                <span>RENT / CASH IN HAND ACCOUNT</span>
+              </div>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2" class="col-header-cell">BALANCE FROM</th>
+            <th class="col-header-cell">TK</th>
+            <th colspan="2" class="col-header-cell">EXPENSE DETAILS</th>
+            <th class="col-header-cell">TK</th>
+          </tr>
+        </thead>
+        <tbody id="cashBody"></tbody>
+        <tfoot>
+          <!-- Row A: TOTAL MONEY & TOTAL EXPENSE -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL MONEY -</td>
+            <td class="summary-amount" id="cashTotalMoney">0</td>
+            <td colspan="2" class="summary-label-center-right">TOTAL EXPENSE -</td>
+            <td class="summary-amount" id="cashTotalSpendsRight">0</td>
+          </tr>
+          <!-- Row B: TOTAL EXPENSE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">TOTAL EXPENSE -</td>
+            <td class="summary-amount" id="cashTotalSpendsLeft">0</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+          <!-- Row C: CASH IN HAND ACCOUNT BALANCE (Left 3 cols bordered, Right 3 cols borderless) -->
+          <tr>
+            <td colspan="2" class="summary-label-left">CASH IN HAND ACCOUNT -</td>
+            <td class="summary-amount" id="cashNetBalance">0</td>
+            <td colspan="3" class="no-border-cell"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- ========================================================= -->
+      <!-- ATTACHED RECEIPT IMAGES (Auto-resized uniform layout)      -->
+      <!-- ========================================================= -->
+      <div id="attachedImagesSection" class="attached-images-section hidden" data-count="0"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Screen-Only Image Attachment Bar (Drag & Drop + File Picker) -->
+  <div
+    id="bottomImageBar"
+    ondragover="handleDragOver(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleDrop(event)"
+    class="no-print hide-on-pdf max-w-[820px] mx-auto mt-4 bg-white border-2 border-dashed border-slate-300 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition"
+  >
+    <div class="flex items-center gap-2.5 text-center sm:text-left">
+      <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-[14px] font-bold text-slate-800">Receipt / Voucher Images</div>
+        <div class="text-[14px] text-slate-500">Click "Add Images" or drag &amp; drop photos here to place them side-by-side below the report tables.</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <input
+        type="file"
+        id="imageUploadInput"
+        accept="image/*"
+        multiple
+        class="hidden"
+        onchange="handleImageSelection(event)"
+      />
+
+      <button
+        type="button"
+        data-edit-control="true"
+        onclick="document.getElementById('imageUploadInput').click()"
+        class="px-3.5 py-2 text-[14px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1.5"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Images
+      </button>
+
+      <button
+        type="button"
+        id="clearImagesBtn"
+        data-edit-control="true"
+        onclick="clearAllImages()"
+        class="hidden px-3 py-2 text-[14px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition cursor-pointer"
+      >
+        Clear All Images (<span id="imageCountBadge">0</span>)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const MONTHS_UPPER = [
+      "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+      "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+    ];
+
+    /**
+     * Independent left (income) and right (expense) item lists per account.
+     * Default TK amounts set to "0" so every TK slot shows 0 cleanly.
+     */
+    const accountData = {
+      bldg: {
+        income: [
+          { desc: "PREVIOUS BALANCE -", amount: "0", bold: true }
+        ],
+        expense: [
+          { desc: "", amount: "0", bold: true }
+        ]
+      },
+      cash: {
+        income: [
+          { desc: "PREVIOUS BALANCE -", amount: "0", bold: true }
+        ],
+        expense: [
+          { desc: "", amount: "0", bold: true }
+        ]
+      }
+    };
+
+    const accountVisibility = {
+      bldg: true,
+      cash: true
+    };
+
+    let isEditable = true;
+
+    /**
+     * Store attached images in memory: { id, src }
+     */
+    let attachedImages = [];
+
+    /**
+     * Format numbers using South Asian / Bangladeshi comma grouping (e.g., 1,05,000).
+     */
+    function formatSouthAsianNumber(value) {
+      const num = Math.round(Number(value) || 0);
+      return num.toLocaleString("en-IN");
+    }
+
+    /**
+     * Show non-blocking inline status message.
+     */
+    let toastTimer = null;
+    function showToast(message, variant = "info") {
+      const toast = document.getElementById("statusToast");
+      toast.textContent = message;
+      toast.className = "mt-3 px-3 py-2 rounded-lg text-[14px] font-medium border transition";
+      if (variant === "success") {
+        toast.classList.add("bg-emerald-50", "text-emerald-800", "border-emerald-200");
+      } else if (variant === "error") {
+        toast.classList.add("bg-rose-50", "text-rose-800", "border-rose-200");
+      } else {
+        toast.classList.add("bg-amber-50", "text-amber-800", "border-amber-200");
+      }
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3200);
+    }
+
+    /**
+     * Download Dropdown Toggle & Outside Click Close
+     */
+    function toggleDownloadMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById("downloadDropdownMenu");
+      const btn = document.getElementById("downloadDropdownBtn");
+      const chevron = document.getElementById("downloadChevron");
+      const isHidden = menu.classList.contains("hidden");
+
+      if (isHidden) {
+        menu.classList.remove("hidden");
+        btn.setAttribute("aria-expanded", "true");
+        chevron.classList.add("rotate-180");
+      } else {
+        closeDownloadMenu();
+      }
+    }
+
+    function closeDownloadMenu() {
+      const menu = document.getElementById("downloadDropdownMenu");
+      const btn = document.getElementById("downloadDropdownBtn");
+      const chevron = document.getElementById("downloadChevron");
+      if (menu) menu.classList.add("hidden");
+      if (btn) btn.setAttribute("aria-expanded", "false");
+      if (chevron) chevron.classList.remove("rotate-180");
+    }
+
+    document.addEventListener("click", (event) => {
+      const container = document.getElementById("downloadDropdownContainer");
+      if (container && !container.contains(event.target)) {
+        closeDownloadMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeDownloadMenu();
+      }
+    });
+
+    /**
+     * Show or hide an account table and its row control box.
+     */
+    function toggleAccountVisibility(sectionKey) {
+      accountVisibility[sectionKey] = !accountVisibility[sectionKey];
+      applyAccountVisibility();
+    }
+
+    function applyAccountVisibility() {
+      const bldgTable = document.getElementById("bldgTable");
+      const cashTable = document.getElementById("cashTable");
+      const toggleBldgBtn = document.getElementById("toggleBldgBtn");
+      const toggleCashBtn = document.getElementById("toggleCashBtn");
+      const bldgControlsBox = document.getElementById("bldgControlsBox");
+      const cashControlsBox = document.getElementById("cashControlsBox");
+
+      bldgTable.classList.toggle("hidden-account", !accountVisibility.bldg);
+      cashTable.classList.toggle("hidden-account", !accountVisibility.cash);
+
+      bldgControlsBox.classList.toggle("hidden", !accountVisibility.bldg);
+      cashControlsBox.classList.toggle("hidden", !accountVisibility.cash);
+
+      toggleBldgBtn.textContent = accountVisibility.bldg
+        ? "Hide Multipurpose Bldg Account"
+        : "Show Multipurpose Bldg Account";
+      toggleCashBtn.textContent = accountVisibility.cash
+        ? "Hide Rent / Cash In Hand Account"
+        : "Show Rent / Cash In Hand Account";
+    }
+
+    /**
+     * Toggle whether report inputs and row/image edit buttons are editable.
+     */
+    function toggleEditMode() {
+      isEditable = !isEditable;
+      applyEditMode();
+      showToast(isEditable ? "Editing enabled." : "Report locked (read-only). Click 'Enable Editing' to modify.");
+    }
+
+    function applyEditMode() {
+      const toggleBtn = document.getElementById("editModeToggleBtn");
+      const dateInput = document.getElementById("formattedDateInput");
+      const datePicker = document.getElementById("reportDatePicker");
+
+      document.body.classList.toggle("report-locked", !isEditable);
+
+      if (dateInput) dateInput.readOnly = !isEditable;
+      if (datePicker) datePicker.disabled = !isEditable;
+
+      document.querySelectorAll("#report-content input").forEach((input) => {
+        input.readOnly = !isEditable;
+      });
+
+      document.querySelectorAll('[data-edit-control="true"]').forEach((btn) => {
+        btn.disabled = !isEditable;
+        btn.classList.toggle("opacity-50", !isEditable);
+        btn.classList.toggle("pointer-events-none", !isEditable);
+      });
+
+      if (isEditable) {
+        toggleBtn.textContent = "Editable: ON (Click to Lock)";
+        toggleBtn.className = "px-3 py-2 text-[14px] font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg transition cursor-pointer";
+      } else {
+        toggleBtn.textContent = "Locked: OFF (Enable Editing)";
+        toggleBtn.className = "px-3 py-2 text-[14px] font-semibold text-white bg-slate-700 hover:bg-slate-800 border border-slate-700 rounded-lg transition cursor-pointer";
+      }
+    }
+
+    /**
+     * Sync the editable date text input when the date picker changes.
+     */
+    function syncDateFromPicker() {
+      if (!isEditable) return;
+      const picker = document.getElementById("reportDatePicker");
+      const textInput = document.getElementById("formattedDateInput");
+      if (!picker || !picker.value) return;
+
+      const [y, m, d] = picker.value.split("-").map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      const monthName = MONTHS_UPPER[dateObj.getMonth()];
+      const shortYear = String(dateObj.getFullYear()).slice(-2);
+
+      textInput.value = `${day} ${monthName} ${shortYear}`;
+    }
+
+    /**
+     * Get current display date text and sanitized filename suffix.
+     */
+    function getReportDateText() {
+      const textInput = document.getElementById("formattedDateInput");
+      return (textInput && textInput.value.trim()) || "REPORT";
+    }
+
+    function getDateFilenameSuffix() {
+      const raw = getReportDateText();
+      return raw.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "").toUpperCase();
+    }
+
+    /**
+     * Render tbody rows for a given section ('bldg' or 'cash').
+     */
+    function renderSectionBody(sectionKey) {
+      const tbody = document.getElementById(sectionKey === "bldg" ? "bldgBody" : "cashBody");
+      const incomeList = accountData[sectionKey].income;
+      const expenseList = accountData[sectionKey].expense;
+      const maxRows = Math.max(incomeList.length, expenseList.length, 1);
+
+      let rowsHtml = "";
+
+      for (let i = 0; i < maxRows; i++) {
+        const inc = incomeList[i];
+        const exp = expenseList[i];
+
+        const leftCells = inc
+          ? `
+            <td class="item-sn">${i + 1}.</td>
+            <td>
+              <input
+                type="text"
+                class="table-input-text item-desc-bold"
+                data-bold="true"
+                value="${escapeHtmlAttr(inc.desc)}"
+                ${!isEditable ? "readonly" : ""}
+                oninput="updateItemField('${sectionKey}', 'income', ${i}, 'desc', this.value)"
+              />
+            </td>
+            <td class="col-tk">
+              <input
+                type="number"
+                class="table-input-num"
+                value="${escapeHtmlAttr(inc.amount === "" ? "0" : inc.amount)}"
+                ${!isEditable ? "readonly" : ""}
+                oninput="updateItemField('${sectionKey}', 'income', ${i}, 'amount', this.value)"
+              />
+            </td>
+          `
+          : `
+            <td class="item-sn"></td>
+            <td></td>
+            <td class="col-tk"></td>
+          `;
+
+        const rightCells = exp
+          ? `
+            <td class="item-sn">${i + 1}.</td>
+            <td>
+              <input
+                type="text"
+                class="table-input-text item-desc-bold"
+                data-bold="true"
+                value="${escapeHtmlAttr(exp.desc)}"
+                ${!isEditable ? "readonly" : ""}
+                oninput="updateItemField('${sectionKey}', 'expense', ${i}, 'desc', this.value)"
+              />
+            </td>
+            <td class="col-tk">
+              <input
+                type="number"
+                class="table-input-num"
+                value="${escapeHtmlAttr(exp.amount === "" ? "0" : exp.amount)}"
+                ${!isEditable ? "readonly" : ""}
+                oninput="updateItemField('${sectionKey}', 'expense', ${i}, 'amount', this.value)"
+              />
+            </td>
+          `
+          : `
+            <td class="item-sn"></td>
+            <td></td>
+            <td class="col-tk"></td>
+          `;
+
+        rowsHtml += `<tr>${leftCells}${rightCells}</tr>`;
+      }
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    /**
+     * Update an item's description or amount in state and recalculate totals.
+     */
+    function updateItemField(sectionKey, side, index, field, value) {
+      if (!isEditable) return;
+      if (accountData[sectionKey] && accountData[sectionKey][side][index]) {
+        accountData[sectionKey][side][index][field] = value;
+        recalculateAll();
+      }
+    }
+
+    /**
+     * Add an item independently to either the left ('income') or right ('expense') side.
+     */
+    function addSideItem(sectionKey, side) {
+      if (!isEditable) return;
+      accountData[sectionKey][side].push({
+        desc: "",
+        amount: "0",
+        bold: true
+      });
+      renderSectionBody(sectionKey);
+      recalculateAll();
+    }
+
+    /**
+     * Remove the last item independently from either 'income' or 'expense' side.
+     */
+    function removeSideItem(sectionKey, side) {
+      if (!isEditable) return;
+      const list = accountData[sectionKey][side];
+      if (list.length > 1) {
+        list.pop();
+        renderSectionBody(sectionKey);
+        recalculateAll();
+      } else {
+        showToast(`At least 1 ${side === "income" ? "balance/income" : "expense"} row must remain.`);
+      }
+    }
+
+    /**
+     * Compute structured account totals for calculations and Word export.
+     */
+    function getSectionSummary(sectionKey) {
+      const totalMoney = accountData[sectionKey].income.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      );
+      const totalSpends = accountData[sectionKey].expense.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      );
+      const netBalance = totalMoney - totalSpends;
+
+      return { totalMoney, totalSpends, netBalance };
+    }
+
+    /**
+     * Recalculate totals and remaining balances for both accounts.
+     */
+    function recalculateAll() {
+      calculateSectionTotals("bldg", {
+        moneyEl: "bldgTotalMoney",
+        spendsRightEl: "bldgTotalSpendsRight",
+        spendsLeftEl: "bldgTotalSpendsLeft",
+        netEl: "bldgNetBalance"
+      });
+
+      calculateSectionTotals("cash", {
+        moneyEl: "cashTotalMoney",
+        spendsRightEl: "cashTotalSpendsRight",
+        spendsLeftEl: "cashTotalSpendsLeft",
+        netEl: "cashNetBalance"
+      });
+    }
+
+    function calculateSectionTotals(sectionKey, ids) {
+      const { totalMoney, totalSpends, netBalance } = getSectionSummary(sectionKey);
+
+      document.getElementById(ids.moneyEl).textContent = formatSouthAsianNumber(totalMoney);
+      document.getElementById(ids.spendsRightEl).textContent = formatSouthAsianNumber(totalSpends);
+      document.getElementById(ids.spendsLeftEl).textContent = formatSouthAsianNumber(totalSpends);
+      document.getElementById(ids.netEl).textContent = formatSouthAsianNumber(netBalance);
+    }
+
+    /**
+     * Handle selection of one or more receipt/voucher images.
+     */
+    function handleImageSelection(event) {
+      if (!isEditable) return;
+      const files = Array.from(event.target.files || []);
+      processImageFiles(files);
+      event.target.value = "";
+    }
+
+    /**
+     * Drag & Drop handlers on the bottom image attachment bar.
+     */
+    function handleDragOver(event) {
+      if (!isEditable) return;
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.add("border-indigo-500", "bg-indigo-50/40");
+    }
+
+    function handleDragLeave(event) {
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.remove("border-indigo-500", "bg-indigo-50/40");
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      const bar = document.getElementById("bottomImageBar");
+      bar.classList.remove("border-indigo-500", "bg-indigo-50/40");
+      if (!isEditable) return;
+      const files = Array.from(event.dataTransfer?.files || []);
+      processImageFiles(files);
+    }
+
+    /**
+     * Automatically resize image files down to maxDimension while preserving aspect ratio.
+     */
+    function resizeImageFile(file, maxDimension = 1200, quality = 0.88) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function processImageFiles(files) {
+      if (!files.length) return;
+      const validImages = files.filter((f) => f.type.startsWith("image/"));
+
+      if (validImages.length < files.length) {
+        showToast("Skipped non-image file(s). Only image files can be attached.");
+      }
+      if (!validImages.length) return;
+
+      for (let i = 0; i < validImages.length; i++) {
+        const resizedDataUrl = await resizeImageFile(validImages[i]);
+        attachedImages.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${i}`,
+          src: resizedDataUrl
+        });
+      }
+
+      renderAttachedImages();
+    }
+
+    /**
+     * Remove a single attached image by ID.
+     */
+    function removeAttachedImage(id) {
+      if (!isEditable) return;
+      attachedImages = attachedImages.filter((img) => img.id !== id);
+      renderAttachedImages();
+    }
+
+    /**
+     * Remove all attached images.
+     */
+    function clearAllImages() {
+      if (!isEditable) return;
+      attachedImages = [];
+      renderAttachedImages();
+      showToast("All attached images cleared.");
+    }
+
+    /**
+     * Render attached images cleanly in an auto-sized uniform layout below the tables.
+     */
+    function renderAttachedImages() {
+      const section = document.getElementById("attachedImagesSection");
+      const clearBtn = document.getElementById("clearImagesBtn");
+      const countBadge = document.getElementById("imageCountBadge");
+
+      section.setAttribute("data-count", String(attachedImages.length));
+
+      if (attachedImages.length === 0) {
+        section.classList.add("hidden");
+        clearBtn.classList.add("hidden");
+        section.innerHTML = "";
+        countBadge.textContent = "0";
+        return;
+      }
+
+      section.classList.remove("hidden");
+      clearBtn.classList.remove("hidden");
+      countBadge.textContent = String(attachedImages.length);
+
+      section.innerHTML = attachedImages
+        .map(
+          (img, index) => `
+          <div class="receipt-img-wrapper">
+            <button
+              type="button"
+              data-edit-control="true"
+              class="remove-image-btn no-print hide-on-pdf"
+              title="Remove image"
+              onclick="removeAttachedImage('${img.id}')"
+            >&times;</button>
+            <img src="${img.src}" alt="Receipt ${index + 1}" />
+          </div>
+        `
+        )
+        .join("");
+
+      applyEditMode();
+    }
+
+    function escapeHtmlAttr(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function escapeHtmlText(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    /**
+     * Helper to trigger browser file download from a Blob.
+     */
+    function triggerBlobDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    /**
+     * Get list of currently visible accounts with metadata for Word export.
+     */
+    function getVisibleAccountConfigs() {
+      const configs = [];
+      if (accountVisibility.bldg) {
+        configs.push({
+          key: "bldg",
+          title: "MULTIPURPOSE BLDG ACCOUNT",
+          netLabel: "MULTIPURPOSE BLDG ACCOUNT -"
+        });
+      }
+      if (accountVisibility.cash) {
+        configs.push({
+          key: "cash",
+          title: "RENT / CASH IN HAND ACCOUNT",
+          netLabel: "CASH IN HAND ACCOUNT -"
+        });
+      }
+      return configs;
+    }
+
+    /**
+     * Shared Static DOM Preparation & Restoration for crisp PDF & JPG captures.
+     * Uses symmetrical padding & block-level text nodes so text never touches border lines in JPG/PDF.
+     */
+    function prepareStaticReportDOM(reportEl) {
+      const hiddenControls = reportEl.querySelectorAll(".hide-on-pdf");
+      hiddenControls.forEach((el) => {
+        el.style.display = "none";
+      });
+
+      const hiddenAccounts = reportEl.querySelectorAll(".account-table.hidden-account");
+      hiddenAccounts.forEach((tbl) => {
+        tbl.style.setProperty("display", "none", "important");
+      });
+
+      const styleAdjustments = [];
+
+      // Keep top 3 heading line wraps tight with zero extra gap
+      reportEl.querySelectorAll(".header-line-wrap").forEach((wrap) => {
+        const prev = {
+          el: wrap,
+          marginBottom: wrap.style.marginBottom
+        };
+        wrap.style.marginBottom = "0px";
+        styleAdjustments.push(prev);
+      });
+
+      // Symmetrical top/bottom cell padding & explicit line-height so text stays centered away from lines
+      reportEl.querySelectorAll("th, td").forEach((cell) => {
+        if (cell.classList.contains("no-border-cell")) return;
+        const prev = {
+          el: cell,
+          paddingTop: cell.style.paddingTop,
+          paddingBottom: cell.style.paddingBottom,
+          paddingLeft: cell.style.paddingLeft,
+          paddingRight: cell.style.paddingRight,
+          verticalAlign: cell.style.verticalAlign,
+          lineHeight: cell.style.lineHeight,
+          fontSize: cell.style.fontSize,
+          fontWeight: cell.style.fontWeight
+        };
+        cell.style.verticalAlign = "middle";
+        cell.style.lineHeight = "1.2";
+        cell.style.fontWeight = "700";
+        if (cell.classList.contains("section-title-cell")) {
+          cell.style.paddingTop = "6px";
+          cell.style.paddingBottom = "8px";
+        } else {
+          cell.style.fontSize = "14.5px";
+          cell.style.paddingTop = "5px";
+          cell.style.paddingBottom = "7px";
+        }
+        styleAdjustments.push(prev);
+      });
+
+      // Hide all underline bars cleanly across headings and sections
+      reportEl.querySelectorAll('[data-ul-bar="true"]').forEach((bar) => {
+        const prev = {
+          el: bar,
+          display: bar.style.display
+        };
+        bar.style.setProperty("display", "none", "important");
+        styleAdjustments.push(prev);
+      });
+
+      const inputs = reportEl.querySelectorAll("input");
+      const replacements = [];
+
+      inputs.forEach((input) => {
+        const span = document.createElement("span");
+        const isDate = input.dataset.dateLine === "true";
+        span.style.display = isDate ? "inline-block" : "block";
+        span.style.fontSize = isDate ? "20px" : "14.5px";
+        span.style.lineHeight = isDate ? "1.12" : "1.2";
+        span.style.fontWeight = "700";
+
+        if (!isDate) {
+          span.style.width = "100%";
+        }
+
+        if (input.type === "number") {
+          const rawVal = input.value.trim();
+          span.style.textAlign = "right";
+          span.style.fontWeight = "700";
+          span.textContent = rawVal === "" ? "0" : formatSouthAsianNumber(parseFloat(rawVal));
+        } else {
+          span.style.textAlign = input.dataset.align || "left";
+          span.style.fontWeight = "700";
+          if (isDate) {
+            span.style.padding = "0 4px";
+          }
+          span.textContent = input.value.trim();
+        }
+
+        input.parentNode.replaceChild(span, input);
+        replacements.push({ original: input, temp: span });
+      });
+
+      return { hiddenControls, hiddenAccounts, styleAdjustments, replacements };
+    }
+
+    function restoreStaticReportDOM(snapshot) {
+      if (!snapshot) return;
+      snapshot.replacements.forEach(({ original, temp }) => {
+        if (temp.parentNode) {
+          temp.parentNode.replaceChild(original, temp);
+        }
+      });
+      snapshot.styleAdjustments.forEach((item) => {
+        if (item.marginBottom !== undefined) item.el.style.marginBottom = item.marginBottom;
+        if (item.paddingTop !== undefined) item.el.style.paddingTop = item.paddingTop;
+        if (item.paddingBottom !== undefined) item.el.style.paddingBottom = item.paddingBottom;
+        if (item.paddingLeft !== undefined) item.el.style.paddingLeft = item.paddingLeft;
+        if (item.paddingRight !== undefined) item.el.style.paddingRight = item.paddingRight;
+        if (item.verticalAlign !== undefined) item.el.style.verticalAlign = item.verticalAlign;
+        if (item.lineHeight !== undefined) item.el.style.lineHeight = item.lineHeight;
+        if (item.fontSize !== undefined) item.el.style.fontSize = item.fontSize;
+        if (item.fontWeight !== undefined) item.el.style.fontWeight = item.fontWeight;
+        if (item.display !== undefined) {
+          item.el.style.removeProperty("display");
+          item.el.style.display = item.display;
+        }
+      });
+      snapshot.hiddenControls.forEach((el) => {
+        el.style.display = "";
+      });
+      snapshot.hiddenAccounts.forEach((tbl) => {
+        tbl.style.removeProperty("display");
+      });
+    }
+
+    /**
+     * Set loading state on main Download Report dropdown button.
+     */
+    function setDownloadButtonLoading(isLoading, label = "Download Report") {
+      const btn = document.getElementById("downloadDropdownBtn");
+      const labelEl = document.getElementById("downloadBtnLabel");
+      btn.disabled = isLoading;
+      btn.classList.toggle("opacity-75", isLoading);
+      labelEl.textContent = isLoading ? label : "Download Report";
+    }
+
+    /**
+     * Master export router triggered from the dropdown menu (PDF, JPG, Microsoft Word only).
+     */
+    function handleExport(format) {
+      closeDownloadMenu();
+
+      switch (format) {
+        case "pdf":
+          generatePDF();
+          break;
+        case "jpg":
+          generateJPG();
+          break;
+        case "doc":
+          generateWord();
+          break;
+        default:
+          showToast("Unsupported export format.", "error");
+      }
+    }
+
+    /**
+     * 1. Export clean PDF (.pdf) matching the reference sheet.
+     */
+    function generatePDF() {
+      const reportEl = document.getElementById("report-content");
+      const fileNameSuffix = getDateFilenameSuffix();
+      setDownloadButtonLoading(true, "Generating PDF...");
+
+      const domSnapshot = prepareStaticReportDOM(reportEl);
+
+      const cleanup = () => {
+        restoreStaticReportDOM(domSnapshot);
+        setDownloadButtonLoading(false);
+      };
+
+      const options = {
+        margin: [8, 8, 8, 8],
+        filename: `KILOFAR_Daily_Report_${fileNameSuffix}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          backgroundColor: "#ffffff"
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait"
+        }
+      };
+
+      html2pdf()
+        .set(options)
+        .from(reportEl)
+        .save()
+        .then(() => {
+          cleanup();
+          showToast("PDF report downloaded successfully.", "success");
+        })
+        .catch(() => {
+          cleanup();
+          showToast("PDF export encountered an issue. Try Print Sheet -> Save as PDF.", "error");
+        });
+    }
+
+    /**
+     * 2. Export high-resolution JPG Image (.jpg) using html2canvas.
+     */
+    async function generateJPG() {
+      const reportEl = document.getElementById("report-content");
+      const fileNameSuffix = getDateFilenameSuffix();
+      setDownloadButtonLoading(true, "Generating JPG...");
+
+      const domSnapshot = prepareStaticReportDOM(reportEl);
+
+      try {
+        if (typeof html2canvas === "undefined") {
+          throw new Error("html2canvas not available");
+        }
+
+        const canvas = await html2canvas(reportEl, {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          backgroundColor: "#ffffff"
+        });
+
+        // Fill white background cleanly for JPEG output
+        const jpgCanvas = document.createElement("canvas");
+        jpgCanvas.width = canvas.width;
+        jpgCanvas.height = canvas.height;
+        const ctx = jpgCanvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, jpgCanvas.width, jpgCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+
+        jpgCanvas.toBlob((blob) => {
+          restoreStaticReportDOM(domSnapshot);
+          setDownloadButtonLoading(false);
+          if (!blob) {
+            showToast("Failed to render JPG image.", "error");
+            return;
+          }
+          triggerBlobDownload(blob, `KILOFAR_Daily_Report_${fileNameSuffix}.jpg`);
+          showToast("JPG image downloaded successfully.", "success");
+        }, "image/jpeg", 0.95);
+      } catch (err) {
+        restoreStaticReportDOM(domSnapshot);
+        setDownloadButtonLoading(false);
+        showToast("JPG export failed. Please try again.", "error");
+      }
+    }
+
+    /**
+     * 3. Export Microsoft Word Document (.doc) with exact Calibri borders, typography & embedded receipt images.
+     */
+    function generateWord() {
+      try {
+        const fileNameSuffix = getDateFilenameSuffix();
+        const reportDate = escapeHtmlText(getReportDateText());
+        const visibleAccounts = getVisibleAccountConfigs();
+
+        if (visibleAccounts.length === 0) {
+          showToast("At least one account must be visible to export.", "error");
+          return;
+        }
+
+        const tablesHtml = visibleAccounts
+          .map((acc) => {
+            const incomeList = accountData[acc.key].income;
+            const expenseList = accountData[acc.key].expense;
+            const maxRows = Math.max(incomeList.length, expenseList.length, 1);
+            const { totalMoney, totalSpends, netBalance } = getSectionSummary(acc.key);
+
+            let bodyRowsHtml = "";
+            for (let i = 0; i < maxRows; i++) {
+              const inc = incomeList[i];
+              const exp = expenseList[i];
+
+              const leftHtml = inc
+                ? `
+                  <td style="border:1px solid #000; padding:4px 5px; width:5%; text-align:center; font-weight:700;">${i + 1}.</td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:31%; font-weight:700;">${escapeHtmlText(inc.desc)}</td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:14%; text-align:right; font-weight:700;">${inc.amount !== "" ? formatSouthAsianNumber(parseFloat(inc.amount)) : "0"}</td>
+                `
+                : `
+                  <td style="border:1px solid #000; padding:4px 5px; width:5%;"></td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:31%;"></td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:14%;"></td>
+                `;
+
+              const rightHtml = exp
+                ? `
+                  <td style="border:1px solid #000; padding:4px 5px; width:5%; text-align:center; font-weight:700;">${i + 1}.</td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:31%; font-weight:700;">${escapeHtmlText(exp.desc)}</td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:14%; text-align:right; font-weight:700;">${exp.amount !== "" ? formatSouthAsianNumber(parseFloat(exp.amount)) : "0"}</td>
+                `
+                : `
+                  <td style="border:1px solid #000; padding:4px 5px; width:5%;"></td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:31%;"></td>
+                  <td style="border:1px solid #000; padding:4px 5px; width:14%;"></td>
+                `;
+
+              bodyRowsHtml += `<tr>${leftHtml}${rightHtml}</tr>`;
+            }
+
+            return `
+              <table style="width:100%; border-collapse:collapse; font-family:Calibri, Arial, sans-serif; font-size:11pt; font-weight:700; margin-bottom:14pt;">
+                <thead>
+                  <tr>
+                    <th colspan="6" style="border:1px solid #000; padding:5px; text-align:center; font-size:13pt; font-weight:700;">
+                      ${escapeHtmlText(acc.title)}
+                    </th>
+                  </tr>
+                  <tr>
+                    <th colspan="2" style="border:1px solid #000; padding:4px; text-align:center; font-weight:700;">BALANCE FROM</th>
+                    <th style="border:1px solid #000; padding:4px; text-align:center; font-weight:700;">TK</th>
+                    <th colspan="2" style="border:1px solid #000; padding:4px; text-align:center; font-weight:700;">EXPENSE DETAILS</th>
+                    <th style="border:1px solid #000; padding:4px; text-align:center; font-weight:700;">TK</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bodyRowsHtml}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2" style="border:1px solid #000; padding:4px 5px; font-weight:700;">TOTAL MONEY -</td>
+                    <td style="border:1px solid #000; padding:4px 5px; text-align:right; font-weight:700;">${formatSouthAsianNumber(totalMoney)}</td>
+                    <td colspan="2" style="border:1px solid #000; padding:4px 5px; text-align:center; font-weight:700;">TOTAL EXPENSE -</td>
+                    <td style="border:1px solid #000; padding:4px 5px; text-align:right; font-weight:700;">${formatSouthAsianNumber(totalSpends)}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="border:1px solid #000; padding:4px 5px; font-weight:700;">TOTAL EXPENSE -</td>
+                    <td style="border:1px solid #000; padding:4px 5px; text-align:right; font-weight:700;">${formatSouthAsianNumber(totalSpends)}</td>
+                    <td colspan="3" style="border:none;"></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="border:1px solid #000; padding:4px 5px; font-weight:700;">${escapeHtmlText(acc.netLabel)}</td>
+                    <td style="border:1px solid #000; padding:4px 5px; text-align:right; font-weight:700;">${formatSouthAsianNumber(netBalance)}</td>
+                    <td colspan="3" style="border:none;"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            `;
+          })
+          .join("");
+
+        // Optional attached receipt images grid for Word
+        let imagesHtml = "";
+        if (attachedImages.length > 0) {
+          const rows = [];
+          for (let i = 0; i < attachedImages.length; i += 2) {
+            const img1 = attachedImages[i];
+            const img2 = attachedImages[i + 1];
+            rows.push(`
+              <tr>
+                <td style="padding:8px; text-align:center; width:50%; vertical-align:middle;">
+                  <img src="${img1.src}" width="280" style="max-width:100%; height:auto;" />
+                </td>
+                <td style="padding:8px; text-align:center; width:50%; vertical-align:middle;">
+                  ${img2 ? `<img src="${img2.src}" width="280" style="max-width:100%; height:auto;" />` : ""}
+                </td>
+              </tr>
+            `);
+          }
+          imagesHtml = `
+            <table style="width:100%; border-collapse:collapse; margin-top:12pt;">
+              <tbody>${rows.join("")}</tbody>
+            </table>
+          `;
+        }
+
+        const wordDocHtml = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                xmlns:w="urn:schemas-microsoft-com:office:word"
+                xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8" />
+            <title>KILOFAR CORPORATION - Daily Report</title>
+            <style>
+              @page { size: A4 portrait; margin: 1.2cm; }
+              body { font-family: Calibri, Arial, sans-serif; color: #000000; }
+            </style>
+          </head>
+          <body>
+            <div style="text-align:center; font-size:15pt; font-weight:700; line-height:1.12; margin-bottom:8pt;">
+              <div>KILOFAR CORPORATION</div>
+              <div>DAILY INCOME &amp; EXPENDITURE</div>
+              <div>${reportDate}</div>
+            </div>
+            ${tablesHtml}
+            ${imagesHtml}
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(["﻿", wordDocHtml], {
+          type: "application/msword;charset=utf-8"
+        });
+        triggerBlobDownload(blob, `KILOFAR_Daily_Report_${fileNameSuffix}.doc`);
+        showToast("Microsoft Word document (.doc) downloaded successfully.", "success");
+      } catch (err) {
+        showToast("Word export encountered an error.", "error");
+      }
+    }
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      renderSectionBody("bldg");
+      renderSectionBody("cash");
+      recalculateAll();
+      applyAccountVisibility();
+      applyEditMode();
+    });
+  </script>
+</body>
+</html>
